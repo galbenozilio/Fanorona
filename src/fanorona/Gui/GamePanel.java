@@ -21,20 +21,19 @@ import java.awt.Toolkit;
 public class GamePanel extends javax.swing.JPanel {
     
     Image imageBoard;
-     Board board;
+    Board board;
     /**
      * Creates new form GamePanel
      */
     public GamePanel() {
         initComponents();
-        imageBoard = Toolkit.getDefaultToolkit().getImage("Empty_Board.png");
+        imageBoard = Toolkit.getDefaultToolkit().getImage("images/Empty_Board.png");
         this.board = new Board(this);
        // this.setSize(800, 500);
     }
     
     @Override
     public void paint(Graphics gr){
-        
         gr.drawImage(imageBoard, 0, 0,this.getWidth(), this.getHeight(), this);
         board.paint(gr);
     }
@@ -70,6 +69,7 @@ public class GamePanel extends javax.swing.JPanel {
     private void formMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseClicked
         int row = (evt.getY() - Board.DIF) / (Board.cellsize+Board.SPACE);
         int col = (evt.getX() - Board.DIF) / (Board.cellsize+Board.SPACE);
+        board.selected(this.getGraphics(), row, col);
     }//GEN-LAST:event_formMouseClicked
 
 

@@ -19,15 +19,16 @@ public class Board
     public static final int SPACE = 30;
     public static int cellsize;
     Player black,white;
-    Image imageBlack, imageWhite;
+    Image imageBlack, imageWhite,imageSelected;
     GamePanel panel;
     
     public Board(GamePanel panel)
     {
         black = new Player(0x000000000297ffffL);
         white = new Player(0x00001ffffd280000L);
-        imageBlack = Toolkit.getDefaultToolkit().getImage("Black.png");
-        imageWhite = Toolkit.getDefaultToolkit().getImage("Red.png");
+        imageBlack = Toolkit.getDefaultToolkit().getImage("images/Black.png");
+        imageWhite = Toolkit.getDefaultToolkit().getImage("images/Red.png");
+        imageSelected = Toolkit.getDefaultToolkit().getImage("images/selectedBtn.png");
         this.panel = panel;
         cellsize = 36;
     }
@@ -46,6 +47,11 @@ public class Board
                 gr.drawImage(imageWhite,i%COLS*(cellsize+SPACE)+DIF,i/COLS*(cellsize+SPACE)+DIF,cellsize,cellsize,panel);
             }
         }
+    }
+    
+    public void selected(Graphics gr,int x,int y)
+    {// Highlights a selected piece
+        gr.drawImage(imageSelected,y*(cellsize+SPACE)+DIF,x*(cellsize+SPACE)+DIF,cellsize,cellsize,panel);
     }
 
 }
