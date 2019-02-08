@@ -18,7 +18,8 @@ public class Board
     // The difference between each cell
     public static final int SPACE = 30;
     public static int cellsize;
-    Player black,white;
+    public String turn;
+    public Player black,white;
     Image imageBlack, imageWhite,imageSelected;
     GamePanel panel;
     
@@ -27,10 +28,11 @@ public class Board
         black = new Player(0x000000000297ffffL);
         white = new Player(0x00001ffffd280000L);
         imageBlack = Toolkit.getDefaultToolkit().getImage("images/Black.png");
-        imageWhite = Toolkit.getDefaultToolkit().getImage("images/Red.png");
-        imageSelected = Toolkit.getDefaultToolkit().getImage("images/selectedBtn.png");
+        imageWhite = Toolkit.getDefaultToolkit().getImage("images/White.png");
+        imageSelected = Toolkit.getDefaultToolkit().getImage("images/Red.png");
         this.panel = panel;
         cellsize = 36;
+        turn = "pw";
     }
 
     public void paint(Graphics gr) 
@@ -40,18 +42,29 @@ public class Board
         {
             if((black.state & mask) != 0)
             {
-                gr.drawImage(imageBlack,i%COLS*(cellsize+SPACE)+DIF,i/COLS*(cellsize+SPACE)+DIF,cellsize,cellsize,panel);
+                gr.drawImage(imageBlack,i%COLS*(cellsize+SPACE)+DIF,i/COLS*(cellsize+SPACE)+DIF - (i/COLS*3),cellsize,cellsize,panel);
             }
             if((white.state & mask) != 0)
             {
-                gr.drawImage(imageWhite,i%COLS*(cellsize+SPACE)+DIF,i/COLS*(cellsize+SPACE)+DIF,cellsize,cellsize,panel);
+                gr.drawImage(imageWhite,i%COLS*(cellsize+SPACE)+DIF,i/COLS*(cellsize+SPACE)+DIF - (i/COLS*3),cellsize,cellsize,panel);
             }
         }
     }
     
+    // Highlights a selected piece
     public void selected(Graphics gr,int x,int y)
-    {// Highlights a selected piece
-        gr.drawImage(imageSelected,y*(cellsize+SPACE)+DIF,x*(cellsize+SPACE)+DIF,cellsize,cellsize,panel);
+    {
+        gr.drawImage(imageSelected,y*(cellsize+SPACE)+DIF,x*(cellsize+SPACE)+DIF - (x*3),cellsize,cellsize,panel);
     }
-
+    
+    // returns true if the cell is empty
+    public boolean isEmpty(long location)
+    {
+        if(((location & white.state) == 0) && ((location & black.state) == 0))
+        {
+            return true;
+        }
+        return false;
+    }
+    
 }

@@ -21,7 +21,8 @@ import java.awt.Toolkit;
 public class GamePanel extends javax.swing.JPanel {
     
     Image imageBoard;
-    Board board;
+    Board board; 
+    long selected = 0;
     /**
      * Creates new form GamePanel
      */
@@ -69,7 +70,50 @@ public class GamePanel extends javax.swing.JPanel {
     private void formMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseClicked
         int row = (evt.getY() - Board.DIF) / (Board.cellsize+Board.SPACE);
         int col = (evt.getX() - Board.DIF) / (Board.cellsize+Board.SPACE);
-        board.selected(this.getGraphics(), row, col);
+        long mask = 1;
+        mask<<=(row*9 + col);
+        if(board.turn.equals("pw"))
+        {
+            if(selected != 0)
+            {
+                if(board.isEmpty(mask))
+                {
+                    long x = selected;
+                    x = ~x;
+                    board.white.state &= x;
+                    board.white.state |= mask;
+                    board.paint(this.getGraphics());
+                    selected = 0;
+                    board.turn = "pb";
+                }
+            }
+            else if((mask & board.white.state) != 0)
+            {
+                board.selected(this.getGraphics(), row, col);
+                selected = mask;
+            }
+        }
+        else
+        {
+            if(selected != 0)
+            {
+                if(board.isEmpty(mask))
+                {
+                    long x = selected;
+                    x = ~x;
+                    board.black.state &= x;
+                    board.black.state |= mask;
+                    board.paint(this.getGraphics());
+                    selected = 0;
+                    board.turn = "pw";
+                }
+            }
+            else if((mask & board.black.state) != 0)
+            {
+                board.selected(this.getGraphics(), row, col);
+                selected = mask;
+            }  
+        }    
     }//GEN-LAST:event_formMouseClicked
 
 
