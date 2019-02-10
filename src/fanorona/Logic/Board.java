@@ -22,6 +22,8 @@ public class Board
     public Player black,white;
     Image imageBlack, imageWhite,imageSelected;
     GamePanel panel;
+    long selected = 0;
+    int selectedRow,selectedCol;
     
     public Board(GamePanel panel)
     {
@@ -49,22 +51,60 @@ public class Board
                 gr.drawImage(imageWhite,i%COLS*(cellsize+SPACE)+DIF,i/COLS*(cellsize+SPACE)+DIF - (i/COLS*3),cellsize,cellsize,panel);
             }
         }
+        if(selected != 0)
+        {
+            gr.drawImage(imageSelected,selectedCol*(cellsize+SPACE)+DIF,selectedRow*(cellsize+SPACE)+DIF - (selectedRow*3),cellsize,cellsize,panel);
+        }
     }
     
     // Highlights a selected piece
-    public void selected(Graphics gr,int x,int y)
-    {
-        gr.drawImage(imageSelected,y*(cellsize+SPACE)+DIF,x*(cellsize+SPACE)+DIF - (x*3),cellsize,cellsize,panel);
-    }
+    //public void selected(Graphics gr,int x,int y)
+   // {
+     //   gr.drawImage(imageSelected,y*(cellsize+SPACE)+DIF,x*(cellsize+SPACE)+DIF - (x*3),cellsize,cellsize,panel);
+    //}
+   
+    // Undo highlighting
+    //public void cancelSelection(Graphics gr,int x,int y,String color)
+   // {
+     //   if(color == "pw")
+       //     gr.drawImage(imageWhite,y*(cellsize+SPACE)+DIF,x*(cellsize+SPACE)+DIF - (x*3),cellsize,cellsize,panel);
+        //else
+          //  gr.drawImage(imageBlack,y*(cellsize+SPACE)+DIF,x*(cellsize+SPACE)+DIF - (x*3),cellsize,cellsize,panel);
+   // }
     
     // returns true if the cell is empty
     public boolean isEmpty(long location)
     {
-        if(((location & white.state) == 0) && ((location & black.state) == 0))
+        return (location & white.state) == 0 && (location & black.state) == 0;
+    }
+
+    public void Click(int row, int col)
+    {
+        long mask = 1;
+        mask<<=(row*9 + col);
+        Player curPlayer = turn.equals("pw")? white:black;
+        if(selected != 0)
         {
-            return true;
+            if(isEmpty(mask))
+            {
+                long x = selected;
+                x = ~x;
+                curPlayer.state &= x;
+                curPlayer.state |= mask;
+                selected = 0;
+                turn = turn.equals("pw")?"pb":"pw";
+            }
+            else if(mask == selected)
+            {
+                selected = 0;
+            }
         }
-        return false;
+        else if((mask & curPlayer.state) != 0)
+        {
+            selected = mask;
+            selectedRow = row;
+            selectedCol = col;
+        }
     }
     
 }
