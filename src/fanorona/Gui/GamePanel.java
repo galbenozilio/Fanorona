@@ -8,10 +8,10 @@ package fanorona.Gui;
 import fanorona.Logic.Board;
 import static fanorona.Logic.Board.COLS;
 import static fanorona.Logic.Board.SPACE;
-import static fanorona.Logic.Board.cellsize;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Toolkit;
+import static fanorona.Logic.Board.cellSize;
 
 
 /**
@@ -80,8 +80,9 @@ public class GamePanel extends javax.swing.JPanel {
 
     private void formMousePressed(java.awt.event.MouseEvent evt)//GEN-FIRST:event_formMousePressed
     {//GEN-HEADEREND:event_formMousePressed
-        int row = (evt.getY() - Board.DIF) / (Board.cellsize+Board.SPACE);
-        int col = (evt.getX() - Board.DIF) / (Board.cellsize+Board.SPACE);
+        int row = (evt.getY() - Board.DIF) / (Board.cellSize+Board.SPACE);
+        //int row = (evt.getY() - Board.DIF)*COLS /(Board.cellSize + Board.SPACE - 3);
+        int col = (evt.getX() - Board.DIF) / (Board.cellSize + Board.SPACE);
         board.Click(row,col);
         repaint();
     }//GEN-LAST:event_formMousePressed

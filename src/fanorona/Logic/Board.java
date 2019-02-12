@@ -17,7 +17,7 @@ public class Board
     //public static final int ROWDIF = 5;
     // The difference between each cell
     public static final int SPACE = 30;
-    public static int cellsize;
+    public static int cellSize;
     public String turn;
     public Player black,white;
     Image imageBlack, imageWhite,imageSelected;
@@ -33,7 +33,7 @@ public class Board
         imageWhite = Toolkit.getDefaultToolkit().getImage("images/White.png");
         imageSelected = Toolkit.getDefaultToolkit().getImage("images/Red.png");
         this.panel = panel;
-        cellsize = 36;
+        cellSize = 36;
         turn = "pw";
     }
 
@@ -44,33 +44,19 @@ public class Board
         {
             if((black.state & mask) != 0)
             {
-                gr.drawImage(imageBlack,i%COLS*(cellsize+SPACE)+DIF,i/COLS*(cellsize+SPACE)+DIF - (i/COLS*3),cellsize,cellsize,panel);
+                gr.drawImage(imageBlack,i%COLS*(cellSize+SPACE)+DIF,i/COLS*(cellSize+SPACE)+DIF - (i/COLS*3),cellSize,cellSize,panel);
             }
             if((white.state & mask) != 0)
             {
-                gr.drawImage(imageWhite,i%COLS*(cellsize+SPACE)+DIF,i/COLS*(cellsize+SPACE)+DIF - (i/COLS*3),cellsize,cellsize,panel);
+                gr.drawImage(imageWhite,i%COLS*(cellSize+SPACE)+DIF,i/COLS*(cellSize+SPACE)+DIF - (i/COLS*3),cellSize,cellSize,panel);
             }
         }
         if(selected != 0)
         {
-            gr.drawImage(imageSelected,selectedCol*(cellsize+SPACE)+DIF,selectedRow*(cellsize+SPACE)+DIF - (selectedRow*3),cellsize,cellsize,panel);
+            gr.drawImage(imageSelected,selectedCol*(cellSize+SPACE)+DIF,selectedRow*(cellSize+SPACE)+DIF - (selectedRow*3),cellSize,cellSize,panel);
         }
     }
     
-    // Highlights a selected piece
-    //public void selected(Graphics gr,int x,int y)
-   // {
-     //   gr.drawImage(imageSelected,y*(cellsize+SPACE)+DIF,x*(cellsize+SPACE)+DIF - (x*3),cellsize,cellsize,panel);
-    //}
-   
-    // Undo highlighting
-    //public void cancelSelection(Graphics gr,int x,int y,String color)
-   // {
-     //   if(color == "pw")
-       //     gr.drawImage(imageWhite,y*(cellsize+SPACE)+DIF,x*(cellsize+SPACE)+DIF - (x*3),cellsize,cellsize,panel);
-        //else
-          //  gr.drawImage(imageBlack,y*(cellsize+SPACE)+DIF,x*(cellsize+SPACE)+DIF - (x*3),cellsize,cellsize,panel);
-   // }
     
     // returns true if the cell is empty
     public boolean isEmpty(long location)
@@ -85,7 +71,7 @@ public class Board
         Player curPlayer = turn.equals("pw")? white:black;
         if(selected != 0)
         {
-            if(isEmpty(mask))
+            if(isEmpty(mask) && Rules.validMove(selected,mask))
             {
                 long x = selected;
                 x = ~x;
