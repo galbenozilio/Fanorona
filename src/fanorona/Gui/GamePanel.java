@@ -30,7 +30,6 @@ public class GamePanel extends javax.swing.JPanel {
         initComponents();
         imageBoard = Toolkit.getDefaultToolkit().getImage("images/Empty_Board.png");
         this.board = new Board(this);
-       // this.setSize(800, 500);
     }
     
     @Override

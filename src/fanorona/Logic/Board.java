@@ -14,7 +14,6 @@ public class Board
     public static final int SIZE = ROWS * COLS;
     // The difference between the edges of the image and the begining of the board.
     public static final int DIF=15;
-    //public static final int ROWDIF = 5;
     // The difference between each cell
     public static final int SPACE = 30;
     public static int cellSize;
@@ -51,10 +50,9 @@ public class Board
                 gr.drawImage(imageWhite,i%COLS*(cellSize+SPACE)+DIF,i/COLS*(cellSize+SPACE)+DIF - (i/COLS*3),cellSize,cellSize,panel);
             }
         }
+        // Paints a piece in red if it is selected.
         if(selected != 0)
-        {
             gr.drawImage(imageSelected,selectedCol*(cellSize+SPACE)+DIF,selectedRow*(cellSize+SPACE)+DIF - (selectedRow*3),cellSize,cellSize,panel);
-        }
     }
     
     
@@ -69,21 +67,22 @@ public class Board
         long mask = 1;
         mask<<=(row*9 + col);
         Player curPlayer = turn.equals("pw")? white:black;
+        Player opPlayer = turn.equals("pw")? black:white;
         if(selected != 0)
-        {
+        {// If the player has chosen a piece and now wants to move it.
             if(isEmpty(mask) && Rules.validMove(selected,mask))
             {
                 long x = selected;
                 x = ~x;
                 curPlayer.state &= x;
                 curPlayer.state |= mask;
+                opPlayer.state = Rules.eatingInMyDirection(selected,mask,opPlayer.state); 
                 selected = 0;
+                // = opPlayer.state & eat;
                 turn = turn.equals("pw")?"pb":"pw";
             }
             else if(mask == selected)
-            {
                 selected = 0;
-            }
         }
         else if((mask & curPlayer.state) != 0)
         {
