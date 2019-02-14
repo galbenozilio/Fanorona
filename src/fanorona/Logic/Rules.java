@@ -75,8 +75,7 @@ public class Rules
                 temp = temp << dir;
             }
         }
-        long fullBoard = 0x00001fffffffffffL;
-        return mask^op;
+        return mask;
     }
    
 }

@@ -22,6 +22,7 @@ public class Board
     Image imageBlack, imageWhite,imageSelected;
     GamePanel panel;
     long selected = 0;
+    boolean anotherMove = false;
     int selectedRow,selectedCol;
     
     public Board(GamePanel panel)
@@ -64,6 +65,7 @@ public class Board
 
     public void Click(int row, int col)
     {
+        //A boolean to determine if the player gets another move or not.
         long mask = 1;
         mask<<=(row*9 + col);
         Player curPlayer = turn.equals("pw")? white:black;
@@ -76,10 +78,37 @@ public class Board
                 x = ~x;
                 curPlayer.state &= x;
                 curPlayer.state |= mask;
-                opPlayer.state = Rules.eatingInMyDirection(selected,mask,opPlayer.state); 
-                selected = 0;
+                long eat = Rules.eatingInMyDirection(selected,mask,opPlayer.state);
+                if(anotherMove)
+                {
+                    opPlayer.state ^= eat;
+                    if(eat == 0)
+                    {
+                        anotherMove = false;
+                        selected = 0;
+                        turn = turn.equals("pw")?"pb":"pw";
+                    }
+                    else
+                    {
+                        selected = mask;
+                        selectedRow = row;
+                        selectedCol = col;
+                    }
+                }
+                else
+                {
+                    selected = mask;
+                    selectedRow = row;
+                    selectedCol = col;
+                    opPlayer.state ^= eat;
+                    if(eat == 0)
+                    {
+                        selected = 0;
+                        turn = turn.equals("pw")?"pb":"pw";
+                    }
+                    anotherMove = (eat!=0);
+                }
                 // = opPlayer.state & eat;
-                turn = turn.equals("pw")?"pb":"pw";
             }
             else if(mask == selected)
                 selected = 0;
