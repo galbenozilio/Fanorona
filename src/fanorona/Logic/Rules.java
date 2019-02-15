@@ -38,12 +38,18 @@ public class Rules
      * Checks if a move causes eating in the progress direction.
      * Gets the initial location,the location after the move and the state of 
      * the opponent's pieces.
-     * Returns ???
+     * Returns a long number containing the locations of the eaten pieces.
      */
     public static long eatingInMyDirection (long from,long to,long op)
     {
         int dir = (int) (from>to? from/to:-to/from);
         return eating(from,dir,op);
+    }
+    
+    public static long eatingInOppositeDirection(long from,long to,long op)
+    {
+        int dir = (int) (to>from? to/from:-from/to);
+        return eating(to,dir,op);
     }
     
     /**

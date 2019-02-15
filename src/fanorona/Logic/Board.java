@@ -78,12 +78,14 @@ public class Board
                 x = ~x;
                 curPlayer.state &= x;
                 curPlayer.state |= mask;
-                long eat = Rules.eatingInMyDirection(selected,mask,opPlayer.state);
+                long eat1 = Rules.eatingInMyDirection(selected,mask,opPlayer.state);
+                long eat2 = Rules.eatingInOppositeDirection(selected,mask,opPlayer.state);
                 if(anotherMove)
-                {
-                    opPlayer.state ^= eat;
-                    if(eat == 0)
-                    {
+                {// If the player has eaten an enemy piece and now has another move.
+                    opPlayer.state ^= eat1;
+                    opPlayer.state ^= eat2;
+                    if(eat1 == 0 && eat2 == 0)
+                    {// If the move is not an eating move.
                         anotherMove = false;
                         selected = 0;
                         turn = turn.equals("pw")?"pb":"pw";
@@ -100,17 +102,18 @@ public class Board
                     selected = mask;
                     selectedRow = row;
                     selectedCol = col;
-                    opPlayer.state ^= eat;
-                    if(eat == 0)
-                    {
+                    opPlayer.state ^= eat1;
+                    opPlayer.state ^= eat2;
+                    if(eat1 == 0 && eat2 == 0)
+                    {// If the move is not an eating move
                         selected = 0;
                         turn = turn.equals("pw")?"pb":"pw";
                     }
-                    anotherMove = (eat!=0);
+                    anotherMove = (eat1 != 0 && eat2 != 0);
                 }
                 // = opPlayer.state & eat;
             }
-            else if(mask == selected)
+            else if(mask == selected && !anotherMove)
                 selected = 0;
         }
         else if((mask & curPlayer.state) != 0)
