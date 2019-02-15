@@ -23,6 +23,7 @@ public class Board
     GamePanel panel;
     long selected = 0;
     boolean anotherMove = false;
+    boolean choose = false;
     int selectedRow,selectedCol;
     
     public Board(GamePanel panel)
@@ -82,6 +83,11 @@ public class Board
                 long eat2 = Rules.eatingInOppositeDirection(selected,mask,opPlayer.state);
                 if(anotherMove)
                 {// If the player has eaten an enemy piece and now has another move.
+                    if(eat1 != 0 && eat2 != 0)
+                    {
+                        choose = true;
+                        
+                    }
                     opPlayer.state ^= eat1;
                     opPlayer.state ^= eat2;
                     if(eat1 == 0 && eat2 == 0)

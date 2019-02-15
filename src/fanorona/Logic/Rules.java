@@ -5,9 +5,11 @@ import java.lang.Math;
 
 public class Rules
 {
+
+    // A mask of every piece on the boarders of the board, when eating a ???
+    // few pieces in a row, eating must stop at the end of the line.???????
+    public static long wall = 0x000000180C060300L;
    
-    
-    
     /**
      * Checks if the piece can move to the location the user wanted.
      * Creates a mask of all the possible direction the piece can move in.
@@ -17,7 +19,7 @@ public class Rules
     {
         // A mask of every bit on the board that can move in a diagonal.
         long diagonal = 0x0000055555555555L;
-        long possible = 0;
+        long possible = 0x000000180c060300L;
         long mask = from;
         mask = mask & diagonal;
         possible |= from>>1;
@@ -68,6 +70,7 @@ public class Rules
             while((temp & op) != 0)
             {
                 mask |= temp;
+                if((temp & wall) != 0 && dir != 9) break;
                 temp = temp >> dir;
             }
         }
@@ -78,6 +81,7 @@ public class Rules
             while((temp & op) != 0)
             {
                 mask |= temp;
+                if((temp & wall) != 0 && dir != 9) break;
                 temp = temp << dir;
             }
         }
