@@ -66,23 +66,31 @@ public class Rules
         if(dir > 0)
         {// Shift right
             dir = (int)(java.lang.Math.log10(dir)/java.lang.Math.log10(2));
-            temp = from >> dir*2;
-            while((temp & op) != 0)
+            temp = from >> dir;
+            if((temp & wall) == 0 || dir != 1)
             {
-                mask |= temp;
-                if((temp & wall) != 0 && dir != 9) break;
-                temp = temp >> dir;
+                temp >>= dir;
+                while((temp & op) != 0)
+                {
+                    mask |= temp;
+                    if((temp & wall) != 0 && dir != 9) break;
+                    temp >>= dir;
+                }
             }
         }
         else
         {// Shift left
             dir = (int)(java.lang.Math.log10(-dir)/java.lang.Math.log10(2));
-            temp = from << dir*2;
-            while((temp & op) != 0)
+            temp = from << dir;
+            if((temp & wall) == 0 || dir != 1)
             {
-                mask |= temp;
-                if((temp & wall) != 0 && dir != 9) break;
-                temp = temp << dir;
+                temp <<= dir;
+                while((temp & op) != 0)
+                {
+                    mask |= temp;
+                    if((temp & wall) != 0 && dir != 9) break;
+                    temp <<= dir;
+                }
             }
         }
         return mask;

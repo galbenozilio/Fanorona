@@ -19,11 +19,13 @@ public class Board
     public static int cellSize;
     public String turn;
     public Player black,white;
-    Image imageBlack, imageWhite,imageSelected;
+    Image imageBlack, imageWhite,imageSelected, imageX;
     GamePanel panel;
     long selected = 0;
     boolean anotherMove = false;
     boolean choose = false;
+    // Eating in my direction, eating in opposite direction.
+    long eat1,eat2;
     int selectedRow,selectedCol;
     
     public Board(GamePanel panel)
@@ -33,6 +35,7 @@ public class Board
         imageBlack = Toolkit.getDefaultToolkit().getImage("images/Black.png");
         imageWhite = Toolkit.getDefaultToolkit().getImage("images/White.png");
         imageSelected = Toolkit.getDefaultToolkit().getImage("images/Red.png");
+        imageX = Toolkit.getDefaultToolkit().getImage("images/x.png");
         this.panel = panel;
         cellSize = 36;
         turn = "pw";
@@ -50,6 +53,10 @@ public class Board
             if((white.state & mask) != 0)
             {
                 gr.drawImage(imageWhite,i%COLS*(cellSize+SPACE)+DIF,i/COLS*(cellSize+SPACE)+DIF - (i/COLS*3),cellSize,cellSize,panel);
+            }
+            if(eat1 != 0 && eat2 != 0 && ((eat1 & mask) != 0 || (eat2 & mask) != 0))
+            {
+                gr.drawImage(imageX,i%COLS*(cellSize+SPACE)+DIF,i/COLS*(cellSize+SPACE)+DIF - (i/COLS*3),cellSize,cellSize,panel);
             }
         }
         // Paints a piece in red if it is selected.
@@ -71,7 +78,17 @@ public class Board
         mask<<=(row*9 + col);
         Player curPlayer = turn.equals("pw")? white:black;
         Player opPlayer = turn.equals("pw")? black:white;
-        if(selected != 0)
+        if(choose)
+        {
+            if((mask & eat1) !=0)
+                opPlayer.state ^= eat1;
+            else if((mask & eat2) !=0)
+                opPlayer.state ^= eat2;
+            eat1 = 0;
+            eat2 = 0;
+            choose = false;
+        }
+        else if(selected != 0)
         {// If the player has chosen a piece and now wants to move it.
             if(isEmpty(mask) && Rules.validMove(selected,mask))
             {
@@ -79,18 +96,18 @@ public class Board
                 x = ~x;
                 curPlayer.state &= x;
                 curPlayer.state |= mask;
-                long eat1 = Rules.eatingInMyDirection(selected,mask,opPlayer.state);
-                long eat2 = Rules.eatingInOppositeDirection(selected,mask,opPlayer.state);
+                eat1 = Rules.eatingInMyDirection(selected,mask,opPlayer.state);
+                eat2 = Rules.eatingInOppositeDirection(selected,mask,opPlayer.state);
+                selected = mask;
+                selectedRow = row;
+                selectedCol = col;
                 if(anotherMove)
                 {// If the player has eaten an enemy piece and now has another move.
                     if(eat1 != 0 && eat2 != 0)
-                    {
+                    {// The player needs to choose whice pieces to eat.
                         choose = true;
-                        
                     }
-                    opPlayer.state ^= eat1;
-                    opPlayer.state ^= eat2;
-                    if(eat1 == 0 && eat2 == 0)
+                    else if(eat1 == 0 && eat2 == 0)
                     {// If the move is not an eating move.
                         anotherMove = false;
                         selected = 0;
@@ -98,24 +115,34 @@ public class Board
                     }
                     else
                     {
-                        selected = mask;
-                        selectedRow = row;
-                        selectedCol = col;
+                        opPlayer.state ^= eat1;
+                        opPlayer.state ^= eat2;
+                        eat1 = 0;
+                        eat2 = 0;                        
                     }
                 }
                 else
                 {
-                    selected = mask;
-                    selectedRow = row;
-                    selectedCol = col;
-                    opPlayer.state ^= eat1;
-                    opPlayer.state ^= eat2;
+                    //selected = mask;
+                    //selectedRow = row;
+                    //selectedCol = col;
+                    anotherMove = (eat1 != 0 || eat2 != 0);
                     if(eat1 == 0 && eat2 == 0)
                     {// If the move is not an eating move
                         selected = 0;
                         turn = turn.equals("pw")?"pb":"pw";
                     }
-                    anotherMove = (eat1 != 0 && eat2 != 0);
+                    else if(eat1 != 0 && eat2 != 0 )
+                    {
+                        choose = true;
+                    }
+                    else
+                    {
+                        opPlayer.state ^= eat1;
+                        opPlayer.state ^= eat2;
+                        eat1 = 0;
+                        eat2 = 0;
+                    }
                 }
                 // = opPlayer.state & eat;
             }
