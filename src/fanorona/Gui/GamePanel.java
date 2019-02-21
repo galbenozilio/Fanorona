@@ -84,6 +84,7 @@ public class GamePanel extends javax.swing.JPanel {
         int col = (evt.getX() - Board.DIF) / (Board.cellSize + Board.SPACE);
         board.Click(row,col);
         repaint();
+        board.getOneMoreMove();
     }//GEN-LAST:event_formMousePressed
 
 

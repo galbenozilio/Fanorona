@@ -9,10 +9,14 @@ public class Rules
     // A mask of every piece on the boarders of the board, when eating a ???
     // few pieces in a row, eating must stop at the end of the line.???????
     public static long wall = 0x000000180C060300L;
+    // A mask of a full board.
+    public static long fullBoard = 0x00001FFFFFFFFFFFL;
    
     /**
      * Checks if the piece can move to the location the user wanted.
-     * Creates a mask of all the possible direction the piece can move in.
+     * Creates a mask of all the possible direction the piece can move in and.
+     * Gets a location of the piece the player wishes to move and the location 
+     * to which he wishes to move the piece.
      * Returns true if the requested location is a possible location for the piece. 
      */
     public static boolean validMove(long from,long to)
@@ -93,6 +97,35 @@ public class Rules
                 }
             }
         }
+        return mask;
+    }
+    
+    /**
+     * Checks if the selected piece has can do an eating move.
+     * This method is used after one or more eatings, because a player gets an 
+     * extra move after eating only if he has another eating move he can make 
+     * using the same piece.
+     */
+    public static long checkPossibilities(long selected)
+    {
+        long mask = 0;
+        if(validMove(selected,selected >> 1))
+            mask |= selected >> 1;
+        if(validMove(selected,selected << 1))
+            mask |= selected << 1;
+        if(validMove(selected,selected >> 8))
+            mask |= selected >> 8;
+        if(validMove(selected,selected << 8))
+            mask |= selected << 8;
+        if(validMove(selected,selected >> 9))
+            mask |= selected >> 9;
+        if(validMove(selected,selected << 9))
+            mask |= selected << 9;
+        if(validMove(selected,selected >> 10))
+            mask |= selected >> 10;
+        if(validMove(selected,selected << 10))
+            mask |= selected << 10;
+        mask &= fullBoard;
         return mask;
     }
    
