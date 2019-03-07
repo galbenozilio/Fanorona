@@ -1,6 +1,5 @@
 
 package fanorona.Logic;
-import java.util.HashMap;
 import java.lang.Math;
 
 public class Rules
@@ -8,10 +7,27 @@ public class Rules
 
     // A mask of every piece on the boarders of the board, when eating a ???
     // few pieces in a row, eating must stop at the end of the line.???????
-    public static long wall = 0x000000180C060300L;
+    public static final long wall = 0x000000180C060300L;
     // A mask of a full board.
-    public static long fullBoard = 0x00001FFFFFFFFFFFL;
-   
+    public static final long fullBoard = 0x00001FFFFFFFFFFFL;
+    // The previous direction the player moved to in his multiple eating move.
+    //private int prevDirection = 0;
+/*
+    public Rules()
+    {
+        this.prevDirection = 0;
+    }
+
+    public int getPrevDirection()
+    {
+        return prevDirection;
+    }
+
+    public void setPrevDirection(int prevDirection)
+    {
+        this.prevDirection = prevDirection;
+    }
+   */
     /**
      * Checks if the piece can move to the location the user wanted.
      * Creates a mask of all the possible direction the piece can move in and.
@@ -46,13 +62,13 @@ public class Rules
      * the opponent's pieces.
      * Returns a long number containing the locations of the eaten pieces.
      */
-    public static long eatingInMyDirection (long from,long to,long op)
+    public long eatingInMyDirection (long from,long to,long op)
     {
         int dir = (int) (from>to? from/to:-to/from);
         return eating(from,dir,op);
     }
     
-    public static long eatingInOppositeDirection(long from,long to,long op)
+    public long eatingInOppositeDirection(long from,long to,long op)
     {
         int dir = (int) (to>from? to/from:-from/to);
         return eating(to,dir,op);
@@ -64,14 +80,14 @@ public class Rules
      * locations of the eaten pieces.
      * Note : log[2](x) = log[10]x/log[10]2
      */
-    public static long eating(long from,int dir,long op)
+    public long eating(long from,int dir,long op)
     {
         long mask = 0, temp;
         if(dir > 0)
         {// Shift right
             dir = (int)(java.lang.Math.log10(dir)/java.lang.Math.log10(2));
             temp = from >> dir;
-            if((temp & wall) == 0 || dir != 1)
+            if((temp & wall) == 0 || /*dir != 1*/dir == 9)
             {
                 temp >>= dir;
                 while((temp & op) != 0)
@@ -86,7 +102,7 @@ public class Rules
         {// Shift left
             dir = (int)(java.lang.Math.log10(-dir)/java.lang.Math.log10(2));
             temp = from << dir;
-            if((temp & wall) == 0 || dir != 1)
+            if((temp & wall) == 0 || /*dir != 1*/dir == 9)
             {
                 temp <<= dir;
                 while((temp & op) != 0)
@@ -101,11 +117,11 @@ public class Rules
     }
     
     /**
-     * Checks if the selected piece has can do an eating move.
+     * Checks if the selected piece can do an eating move.
      * This method is used after one or more eatings, because a player gets an 
      * extra move after eating only if he has another eating move he can make 
      * using the same piece.
-     */
+     *
     public static long checkPossibilities(long selected)
     {
         long mask = 0;
@@ -128,5 +144,5 @@ public class Rules
         mask &= fullBoard;
         return mask;
     }
-   
+   */
 }

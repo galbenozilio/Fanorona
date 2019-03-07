@@ -80,11 +80,11 @@ public class GamePanel extends javax.swing.JPanel {
     private void formMousePressed(java.awt.event.MouseEvent evt)//GEN-FIRST:event_formMousePressed
     {//GEN-HEADEREND:event_formMousePressed
         int row = (evt.getY() - Board.DIF) / (Board.cellSize+Board.SPACE);
-        //int row = (evt.getY() - Board.DIF)*COLS /(Board.cellSize + Board.SPACE - 3);
         int col = (evt.getX() - Board.DIF) / (Board.cellSize + Board.SPACE);
         board.Click(row,col);
         repaint();
         board.getOneMoreMove();
+        board.checkWin();
     }//GEN-LAST:event_formMousePressed
 
 

@@ -7,6 +7,7 @@ import static fanorona.Logic.Rules.validMove;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Toolkit;
+import javax.swing.JOptionPane;
 
 
 public class Board 
@@ -19,16 +20,22 @@ public class Board
     // The difference between each cell
     public static final int SPACE = 30;
     public static int cellSize;
-    public String turn;
-    public Player black,white;
+    private String turn;
+    private Player black,white;
     Image imageBlack, imageWhite,imageSelected, imageX;
     GamePanel panel;
-    long selected = 0;
-    boolean anotherMove = false;
-    boolean choose = false;
+    // Selected - the selected piece,prev - the previous spots the piece moved 
+    // over in the last move(used only in moves with more than one eating).
+    // Possible - the possible moves a player has after an eating move.
+    long selected = 0,prev = 0,possible = 0;
+    private boolean anotherMove = false;
+    private boolean choose = false;
     // Eating in my direction, eating in opposite direction.
-    long eat1,eat2;
-    int selectedRow,selectedCol;
+    private long eat1,eat2;
+    private int selectedRow,selectedCol;
+    private Rules gameRules;
+    // The previous direction the player moved to in his multiple eating move.
+    private int prevDirection;
     
     public Board(GamePanel panel)
     {
@@ -41,6 +48,7 @@ public class Board
         this.panel = panel;
         cellSize = 36;
         turn = "pw";
+        this.gameRules = new Rules();
     }
 
     public void paint(Graphics gr) 
@@ -84,26 +92,36 @@ public class Board
         mask<<=(row*9 + col);
         Player curPlayer = turn.equals("pw")? white:black;
         Player opPlayer = turn.equals("pw")? black:white;
-        if(choose)
+        if(!anotherMove)
         {
-            if((mask & eat1) !=0)
-                opPlayer.state ^= eat1;
-            else if((mask & eat2) !=0)
-                opPlayer.state ^= eat2;
-            eat1 = 0;
-            eat2 = 0;
-            choose = false;
+            possible = Rules.fullBoard;
+            this.prevDirection = 0;
         }
-        else if(selected != 0)
+        if(choose)
+        {// If the player needs to choose which pieces to eat. 
+            if((mask & eat1) !=0 || ((mask & eat2) !=0))
+            {
+                if((mask & eat1) !=0)
+                    opPlayer.state ^= eat1;
+                else if((mask & eat2) !=0)
+                    opPlayer.state ^= eat2;
+                eat1 = 0;
+                eat2 = 0;
+                choose = false;
+            }
+        }
+        else if(selected != 0 && (mask & ~prev) != 0 && (mask & possible) != 0)
         {// If the player has chosen a piece and now wants to move it.
-            if(isEmpty(mask) && Rules.validMove(selected, mask))
+            if(isEmpty(mask) && gameRules.validMove(selected, mask))
             {
                 long x = selected;
                 x = ~x;
                 curPlayer.state &= x;
                 curPlayer.state |= mask;
-                eat1 = Rules.eatingInMyDirection(selected,mask,opPlayer.state);
-                eat2 = Rules.eatingInOppositeDirection(selected,mask,opPlayer.state);
+                eat1 = gameRules.eatingInMyDirection(selected,mask,opPlayer.state);
+                eat2 = gameRules.eatingInOppositeDirection(selected,mask,opPlayer.state);
+                prev |= selected;
+                this.prevDirection = (int) (selected>mask? selected/mask:-mask/selected);
                 selected = mask;
                 selectedRow = row;
                 selectedCol = col;
@@ -139,55 +157,92 @@ public class Board
     
     public void getOneMoreMove()
     {
-        if(anotherMove)
+        if(!choose)
         {
-            if(checkPossibilities(selected) == 0)
+            if(anotherMove)
             {
-                anotherMove = false;
-                selected = 0;
-                selectedRow = 0;
-                selectedCol = 0;
-                turn = turn.equals("pw")?"pb":"pw";
+                if(checkPossibilities(selected) == 0)
+                {
+                    anotherMove = false;
+                    selected = 0;
+                    selectedRow = 0;
+                    selectedCol = 0;
+                    prev = 0;
+                    turn = turn.equals("pw")?"pb":"pw";
+                }
             }
+            else
+                prev = 0;
         }
     }
     
     /**
-     * Checks if the selected piece has can do an eating move.
+     * Checks if the selected piece can do an eating move.
      * This method is used after one or more eatings, because a player gets an 
      * extra move after eating only if he has another eating move he can make 
      * using the same piece.
+     * First we check if the move is valid - if the space is empty and the piece
+     * can move there, then we check if the player can perform an eating move in 
+     * that direction. If he can, this move is added to the possible moves mask.
      */
     public long checkPossibilities(long from)
     {
         Player opPlayer = turn.equals("pw")? black:white;
         long mask = 0;
-        if(Rules.validMove(selected,from >> 1) && isEmpty(from >> 1))
-            if(Rules.eatingInMyDirection(from, from >> 1,opPlayer.state) != 0|| Rules.eatingInOppositeDirection(from, from >> 1,opPlayer.state) != 0)
+        if(gameRules.validMove(selected,from >> 1) && isEmpty(from >> 1))
+            if(gameRules.eatingInMyDirection(from, from >> 1,opPlayer.state) != 0|| gameRules.eatingInOppositeDirection(from, from >> 1,opPlayer.state) != 0)
                  mask |= from >> 1;
-        if(Rules.validMove(from,from << 1) && isEmpty(from << 1))
-            if(Rules.eatingInMyDirection(from, from << 1,opPlayer.state) != 0|| Rules.eatingInOppositeDirection(from, from << 1,opPlayer.state) != 0)
+        if(gameRules.validMove(from,from << 1) && isEmpty(from << 1))
+            if(gameRules.eatingInMyDirection(from, from << 1,opPlayer.state) != 0|| gameRules.eatingInOppositeDirection(from, from << 1,opPlayer.state) != 0)
                  mask |= from << 1;
-        if(Rules.validMove(from,from >> 8) && isEmpty(from >> 8))
-            if(Rules.eatingInMyDirection(from, from >> 8,opPlayer.state) != 0|| Rules.eatingInOppositeDirection(from, from >> 8,opPlayer.state) != 0)
+        if(gameRules.validMove(from,from >> 8) && isEmpty(from >> 8))
+            if(gameRules.eatingInMyDirection(from, from >> 8,opPlayer.state) != 0|| gameRules.eatingInOppositeDirection(from, from >> 8,opPlayer.state) != 0)
                  mask |= from >> 8;
-        if(Rules.validMove(from,from << 8) && isEmpty(from << 8))
-            if(Rules.eatingInMyDirection(from, from << 8,opPlayer.state) != 0|| Rules.eatingInOppositeDirection(from, from << 8,opPlayer.state) != 0)
+        if(gameRules.validMove(from,from << 8) && isEmpty(from << 8))
+            if(gameRules.eatingInMyDirection(from, from << 8,opPlayer.state) != 0|| gameRules.eatingInOppositeDirection(from, from << 8,opPlayer.state) != 0)
                  mask |= from << 8;
-        if(Rules.validMove(from,from >> 9) && isEmpty(from >> 9))
-            if(Rules.eatingInMyDirection(from, from >> 9,opPlayer.state) != 0|| Rules.eatingInOppositeDirection(from, from >> 9,opPlayer.state) != 0)
+        if(gameRules.validMove(from,from >> 9) && isEmpty(from >> 9))
+            if(gameRules.eatingInMyDirection(from, from >> 9,opPlayer.state) != 0|| gameRules.eatingInOppositeDirection(from, from >> 9,opPlayer.state) != 0)
                  mask |= from >> 9;
-        if(Rules.validMove(from,from << 9) && isEmpty(from << 9))
-            if(Rules.eatingInMyDirection(from, from << 9,opPlayer.state) != 0|| Rules.eatingInOppositeDirection(from, from << 9,opPlayer.state) != 0)
+        if(gameRules.validMove(from,from << 9) && isEmpty(from << 9))
+            if(gameRules.eatingInMyDirection(from, from << 9,opPlayer.state) != 0|| gameRules.eatingInOppositeDirection(from, from << 9,opPlayer.state) != 0)
                  mask |= from << 9;
-        if(Rules.validMove(from,from >> 10) && isEmpty(from >> 10))
-            if(Rules.eatingInMyDirection(from, from >> 10,opPlayer.state) != 0|| Rules.eatingInOppositeDirection(from, from >> 10,opPlayer.state) != 0)
+        if(gameRules.validMove(from,from >> 10) && isEmpty(from >> 10))
+            if(gameRules.eatingInMyDirection(from, from >> 10,opPlayer.state) != 0|| gameRules.eatingInOppositeDirection(from, from >> 10,opPlayer.state) != 0)
                  mask |= from >> 10;
-        if(Rules.validMove(from,from << 10) && isEmpty(from << 10))
-            if(Rules.eatingInMyDirection(from, from << 10,opPlayer.state) != 0|| Rules.eatingInOppositeDirection(from, from << 10,opPlayer.state) != 0)
+        if(gameRules.validMove(from,from << 10) && isEmpty(from << 10))
+            if(gameRules.eatingInMyDirection(from, from << 10,opPlayer.state) != 0|| gameRules.eatingInOppositeDirection(from, from << 10,opPlayer.state) != 0)
                  mask |= from << 10;
+        //So we don't get numbers that are outside of the board.
         mask &= fullBoard;
+        // The player can't go to a place he has already been to in the current move.
+        mask &= ~prev;
+         // The previous direction the player moved in.
+        int dir = prevDirection;
+        // Checking where would the player go if he continues in the same 
+        // he moved in his last move(during a multiple eating move).
+        if(dir > 0)
+        {// Shift right
+            dir = (int)(java.lang.Math.log10(dir)/java.lang.Math.log10(2));
+            from = from >> dir;
+        }
+        else
+        {// Shift left
+            dir = (int)(java.lang.Math.log10(-dir)/java.lang.Math.log10(2));
+            from = from << dir;
+        }
+        // The player can't go in the same direction he just moved in.
+        mask &= ~from;
+        possible = mask;
         return mask;
+    }
+
+    public void checkWin()
+    {
+        if(black.state == 0)
+            JOptionPane.showMessageDialog(panel, "White won!");
+        if(white.state == 0)
+            JOptionPane.showMessageDialog(panel, "Black won!");
     }
     
 }
