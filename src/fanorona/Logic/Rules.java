@@ -12,34 +12,19 @@ public class Rules
     public static final long fullBoard = 0x00001FFFFFFFFFFFL;
     // The previous direction the player moved to in his multiple eating move.
     //private int prevDirection = 0;
-/*
-    public Rules()
-    {
-        this.prevDirection = 0;
-    }
-
-    public int getPrevDirection()
-    {
-        return prevDirection;
-    }
-
-    public void setPrevDirection(int prevDirection)
-    {
-        this.prevDirection = prevDirection;
-    }
-   */
     /**
      * Checks if the piece can move to the location the user wanted.
-     * Creates a mask of all the possible direction the piece can move in and.
+     * Creates a mask of all the possible directions the piece can move in.
      * Gets a location of the piece the player wishes to move and the location 
      * to which he wishes to move the piece.
-     * Returns true if the requested location is a possible location for the piece. 
+     * Returns true if the requested location is a possible location for the
+     * piece. 
      */
     public static boolean validMove(long from,long to)
     {
         // A mask of every bit on the board that can move in a diagonal.
         long diagonal = 0x0000055555555555L;
-        long possible = 0x000000180c060300L;
+        long possible = 0;//0x000000180c060300L;
         long mask = from;
         mask = mask & diagonal;
         possible |= from>>1;
@@ -68,6 +53,12 @@ public class Rules
         return eating(from,dir,op);
     }
     
+    /**
+     * Checks if a move causes eating in the opposite direction.
+     * Gets the initial location,the location after the move and the state of 
+     * the opponent's pieces.
+     * Returns a long number containing the locations of the eaten pieces.
+     */
     public long eatingInOppositeDirection(long from,long to,long op)
     {
         int dir = (int) (to>from? to/from:-from/to);
@@ -87,7 +78,7 @@ public class Rules
         {// Shift right
             dir = (int)(java.lang.Math.log10(dir)/java.lang.Math.log10(2));
             temp = from >> dir;
-            if((temp & wall) == 0 || /*dir != 1*/dir == 9)
+            if((temp & wall) == 0 || dir == 9)
             {
                 temp >>= dir;
                 while((temp & op) != 0)
@@ -102,7 +93,7 @@ public class Rules
         {// Shift left
             dir = (int)(java.lang.Math.log10(-dir)/java.lang.Math.log10(2));
             temp = from << dir;
-            if((temp & wall) == 0 || /*dir != 1*/dir == 9)
+            if((temp & wall) == 0 || dir == 9)
             {
                 temp <<= dir;
                 while((temp & op) != 0)
