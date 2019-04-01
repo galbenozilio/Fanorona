@@ -4,13 +4,13 @@ public class Move
 {
     private long from;
     private long to;
-    private long eat;
+    private long capture;
     
-    public Move(long from,long to,long eat)
+    public Move(long from,long to,long capture)
     {
         this.from = from;
         this.to = to;
-        this.eat = eat;
+        this.capture = capture;
     }
 
     public long getFrom()
@@ -33,14 +33,14 @@ public class Move
         this.to = to;
     }
 
-    public long getEat()
+    public long getCapture()
     {
-        return eat;
+        return capture;
     }
 
-    public void setEat(long eat)
+    public void setCapture(long capture)
     {
-        this.eat = eat;
+        this.capture = capture;
     }
     
     

@@ -5,12 +5,12 @@ import java.lang.Math;
 public class Rules
 {
 
-    // A mask of every piece on the boarders of the board, when eating a ???
-    // few pieces in a row, eating must stop at the end of the line.???????
+    // A mask of every piece on the boarders of the board, when capturing a ???
+    // few pieces in a row, capturing must stop at the end of the line.???????
     public static final long wall = 0x000000180C060300L;
     // A mask of a full board.
     public static final long fullBoard = 0x00001FFFFFFFFFFFL;
-    // The previous direction the player moved to in his multiple eating move.
+    // The previous direction the player moved to in his multiple capturing move.
     //private int prevDirection = 0;
     /**
      * Checks if the piece can move to the location the user wanted.
@@ -42,36 +42,36 @@ public class Rules
     }
     
     /**
-     * Checks if a move causes eating in the progress direction.
+     * Checks if a move causes capturing in the progress direction.
      * Gets the initial location,the location after the move and the state of 
      * the opponent's pieces.
-     * Returns a long number containing the locations of the eaten pieces.
+     * Returns a long number containing the locations of the captured pieces.
      */
-    public long eatingInMyDirection (long from,long to,long op)
+    public long capturingInMyDirection (long from,long to,long op)
     {
         int dir = (int) (from>to? from/to:-to/from);
-        return eating(from,dir,op);
+        return capturing(from,dir,op);
     }
     
     /**
-     * Checks if a move causes eating in the opposite direction.
+     * Checks if a move causes capturing in the opposite direction.
      * Gets the initial location,the location after the move and the state of 
      * the opponent's pieces.
-     * Returns a long number containing the locations of the eaten pieces.
+     * Returns a long number containing the locations of the captured pieces.
      */
-    public long eatingInOppositeDirection(long from,long to,long op)
+    public long capturingInOppositeDirection(long from,long to,long op)
     {
         int dir = (int) (to>from? to/from:-from/to);
-        return eating(to,dir,op);
+        return capturing(to,dir,op);
     }
     
     /**
-     * Checks how many enemy pieces are eaten in a move.
+     * Checks how many enemy pieces are captured in a move.
      * Gets a direction and the opponents status and returns a mask of the 
-     * locations of the eaten pieces.
+     * locations of the captured pieces.
      * Note : log[2](x) = log[10]x/log[10]2
      */
-    public long eating(long from,int dir,long op)
+    public long capturing(long from,int dir,long op)
     {
         long mask = 0, temp;
         if(dir > 0)
@@ -108,10 +108,10 @@ public class Rules
     }
     
     /**
-     * Checks if the selected piece can do an eating move.
-     * This method is used after one or more eatings, because a player gets an 
-     * extra move after eating only if he has another eating move he can make 
-     * using the same piece.
+     * Checks if the selected piece can do an capturing move.
+     * This method is used after one or more captures, because a player gets an 
+     * extra move after a capturing move only if he has another capturing 
+     * move he can make using the same piece.
      *
     public static long checkPossibilities(long selected)
     {

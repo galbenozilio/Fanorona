@@ -7,6 +7,7 @@ public class Ai
     
     public int alphaBeta(Board board,int depth,int alpha,int beta)
     {
+        Board.depth = depth;
         int value;
         if(depth == 0 || !board.checkWin().equals("n"))
         {
@@ -39,11 +40,11 @@ public class Ai
      */
     public int evaluate(Board board)
     {
+        int eval;
         if(!board.checkWin().equals("n"))
-        {
-            return infinity;
-        }
-        int eval = countBits(board.getWhiteState()) - countBits(board.getBlackState());
+            eval = infinity;
+        else
+            eval = countBits(board.getWhiteState()) - countBits(board.getBlackState());
         return board.turn == "pw"?eval:-eval;
     }
     

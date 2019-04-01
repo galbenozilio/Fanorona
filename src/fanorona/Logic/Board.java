@@ -30,20 +30,23 @@ public class Board
     Image imageX = Toolkit.getDefaultToolkit().getImage("images/x.png");
     GamePanel panel;
     // Selected - the selected piece,prev - the previous spots the piece moved 
-    // over in the last move(used only in moves with more than one eating).
-    // Possible - the possible moves a player has after an eating move.
+    // over in the last move(used only in moves with more than one capturing).
+    // Possible - the possible moves a player has after an capturing move.
     long selected = 0,prev = 0,possible = 0;
     private boolean anotherMove = false;
     private boolean choose = false;
-    // Eating in my direction, eating in opposite direction.
-    private long eat1,eat2;
+    // Captureing in my direction, capturing in opposite direction.
+    private long capture1,capture2;
     private int selectedRow,selectedCol;
     private Rules gameRules;
-    // The previous direction the player moved to in his multiple eating move.
+    // The previous direction the player moved to in his multiple capturing move.
     private int prevDirection;
     // A queue containing all the possible moves from the current possition.
     private ArrayList<Move> moves;
     private int infinity = Integer.MAX_VALUE;
+    private Ai ai = new Ai();
+    // The depth of search, depth = 6 for the main board.
+    public static int depth = 6;
     
     public Board(GamePanel panel)
     {
@@ -64,6 +67,7 @@ public class Board
         this.panel = b.panel;
         this.turn = b.turn;
         this.gameRules = new Rules();
+        depth--;
     }
 
     public void paint(Graphics gr) 
@@ -79,7 +83,7 @@ public class Board
             {
                 gr.drawImage(imageWhite,i%COLS*(cellSize+SPACE)+DIF,i/COLS*(cellSize+SPACE)+DIF - (i/COLS*3),cellSize,cellSize,panel);
             }
-            if(eat1 != 0 && eat2 != 0 && ((eat1 & mask) != 0 || (eat2 & mask) != 0))
+            if(capture1 != 0 && capture2 != 0 && ((capture1 & mask) != 0 || (capture2 & mask) != 0))
             {
                 gr.drawImage(imageX,i%COLS*(cellSize+SPACE)+DIF,i/COLS*(cellSize+SPACE)+DIF - (i/COLS*3),cellSize,cellSize,panel);
             }
@@ -116,14 +120,14 @@ public class Board
             }
             if(choose)
             {// If the player needs to choose which pieces to eat. 
-                if((mask & eat1) !=0 || ((mask & eat2) !=0))
+                if((mask & capture1) !=0 || ((mask & capture2) !=0))
                 {
-                    if((mask & eat1) !=0)
-                        opPlayer.state ^= eat1;
-                    else if((mask & eat2) !=0)
-                        opPlayer.state ^= eat2;
-                    eat1 = 0;
-                    eat2 = 0;
+                    if((mask & capture1) !=0)
+                        opPlayer.state ^= capture1;
+                    else if((mask & capture2) !=0)
+                        opPlayer.state ^= capture2;
+                    capture1 = 0;
+                    capture2 = 0;
                     choose = false;
                 }
             }
@@ -135,29 +139,29 @@ public class Board
                     x = ~x;
                     curPlayer.state &= x;
                     curPlayer.state |= mask;
-                    eat1 = gameRules.eatingInMyDirection(selected,mask,opPlayer.state);
-                    eat2 = gameRules.eatingInOppositeDirection(selected,mask,opPlayer.state);
+                    capture1 = gameRules.capturingInMyDirection(selected,mask,opPlayer.state);
+                    capture2 = gameRules.capturingInOppositeDirection(selected,mask,opPlayer.state);
                     prev |= selected;
                     this.prevDirection = (int) (selected>mask? selected/mask:-mask/selected);
                     selected = mask;
                     selectedRow = row;
                     selectedCol = col;
-                    anotherMove = (eat1 != 0 || eat2 != 0);
-                    if(eat1 == 0 && eat2 == 0)
-                    {// If the move is not an eating move
+                    anotherMove = (capture1 != 0 || capture2 != 0);
+                    if(capture1 == 0 && capture2 == 0)
+                    {// If the move is not an capturing move
                         selected = 0;
-                        turn = turn.equals("pw")?"pb":"pw";
+                        endTurn();
                     }
-                    else if(eat1 != 0 && eat2 != 0 )
+                    else if(capture1 != 0 && capture2 != 0 )
                     {
                         choose = true;
                     }
                     else
                     {
-                        opPlayer.state ^= eat1;
-                        opPlayer.state ^= eat2;
-                        eat1 = 0;
-                        eat2 = 0;
+                        opPlayer.state ^= capture1;
+                        opPlayer.state ^= capture2;
+                        capture1 = 0;
+                        capture2 = 0;
                     }
                 }
                 else if(mask == selected && !anotherMove)
@@ -168,11 +172,53 @@ public class Board
                 selected = mask;
                 selectedRow = row;
                 selectedCol = col;
-            }
-            if(turn.equals("pb"))
-                Ai.alphaBeta(this,5,-infinity,infinity);
+            } 
         }
         
+    }
+    
+    public void endTurn()
+    {
+        turn = turn.equals("pw")?"pb":"pw";
+        if(turn.equals("pb") && depth == 6)
+        {
+            getOrderedMoves();
+            int best = 0;
+            Move m = this.getNextMove();
+            // Holds the best possible move.
+            Move bestMove = m;
+            for(int i = 0;i <= this.moves.size();i++)
+            {
+                Board b = new Board(this);
+                b.makeMove(m);
+                b.turn = b.turn.equals("pw")?"pb":"pw";
+                int eval = this.ai.alphaBeta(b,1/*can't reach 5*/, -infinity, infinity );// alpha = -infinity,beta = infinty???
+                if(eval >= best)
+                {
+                    best = eval;
+                    bestMove = m;
+                }
+                m = this.getNextMove();
+            }
+            // Performing the best move on the current Board
+            long from,to;
+            // cur = current player,op = opponent player.
+            Player cur,op;
+            from = bestMove.getFrom();
+            to = bestMove.getTo();
+            cur = turn.equals("pw")?white:black;
+            op = turn.equals("pb")?black:white;
+            long x = from;
+            x = ~x;
+            cur.state &= x;
+            cur.state |= to;
+            if(m.getCapture() != 0)
+            {
+                op.state ^= m.getCapture();
+            }
+            depth = 6;  
+            turn = "pw";
+        }
     }
     
     public void getOneMoreMove()
@@ -181,14 +227,14 @@ public class Board
         {
             if(anotherMove)
             {
-                if(checkEatingPossibilities(selected) == 0)
+                if(checkCaptureingPossibilities(selected) == 0)
                 {
                     anotherMove = false;
                     selected = 0;
                     selectedRow = 0;
                     selectedCol = 0;
                     prev = 0;
-                    turn = turn.equals("pw")?"pb":"pw";
+                    endTurn();
                 }
             }
             else
@@ -197,41 +243,41 @@ public class Board
     }
     
     /**
-     * Checks if the selected piece can do an eating move.
-     * This method is used after one or more eatings, because a player gets an 
-     * extra move after eating only if he has another eating move he can make 
+     * Checks if the selected piece can do an capturing move.
+     * This method is used after one or more captures, because a player gets an 
+     * extra move after capturing only if he has another capturing move he can make 
      * using the same piece.
      * First we check if the move is valid - if the space is empty and the piece
-     * can move there, then we check if the player can perform an eating move in 
+     * can move there, then we check if the player can perform an capturing move in 
      * that direction. If he can, this move is added to the possible moves mask.
      */
-    public long checkEatingPossibilities(long from)
+    public long checkCaptureingPossibilities(long from)
     {
         Player opPlayer = turn.equals("pw")? black:white;
         long mask = 0;
         if(gameRules.validMove(from/*selected*/,from >> 1) && isEmpty(from >> 1))
-            if(gameRules.eatingInMyDirection(from, from >> 1,opPlayer.state) != 0|| gameRules.eatingInOppositeDirection(from, from >> 1,opPlayer.state) != 0)
+            if(gameRules.capturingInMyDirection(from, from >> 1,opPlayer.state) != 0|| gameRules.capturingInOppositeDirection(from, from >> 1,opPlayer.state) != 0)
                  mask |= from >> 1;
         if(gameRules.validMove(from,from << 1) && isEmpty(from << 1))
-            if(gameRules.eatingInMyDirection(from, from << 1,opPlayer.state) != 0|| gameRules.eatingInOppositeDirection(from, from << 1,opPlayer.state) != 0)
+            if(gameRules.capturingInMyDirection(from, from << 1,opPlayer.state) != 0|| gameRules.capturingInOppositeDirection(from, from << 1,opPlayer.state) != 0)
                  mask |= from << 1;
         if(gameRules.validMove(from,from >> 8) && isEmpty(from >> 8))
-            if(gameRules.eatingInMyDirection(from, from >> 8,opPlayer.state) != 0|| gameRules.eatingInOppositeDirection(from, from >> 8,opPlayer.state) != 0)
+            if(gameRules.capturingInMyDirection(from, from >> 8,opPlayer.state) != 0|| gameRules.capturingInOppositeDirection(from, from >> 8,opPlayer.state) != 0)
                  mask |= from >> 8;
         if(gameRules.validMove(from,from << 8) && isEmpty(from << 8))
-            if(gameRules.eatingInMyDirection(from, from << 8,opPlayer.state) != 0|| gameRules.eatingInOppositeDirection(from, from << 8,opPlayer.state) != 0)
+            if(gameRules.capturingInMyDirection(from, from << 8,opPlayer.state) != 0|| gameRules.capturingInOppositeDirection(from, from << 8,opPlayer.state) != 0)
                  mask |= from << 8;
         if(gameRules.validMove(from,from >> 9) && isEmpty(from >> 9))
-            if(gameRules.eatingInMyDirection(from, from >> 9,opPlayer.state) != 0|| gameRules.eatingInOppositeDirection(from, from >> 9,opPlayer.state) != 0)
+            if(gameRules.capturingInMyDirection(from, from >> 9,opPlayer.state) != 0|| gameRules.capturingInOppositeDirection(from, from >> 9,opPlayer.state) != 0)
                  mask |= from >> 9;
         if(gameRules.validMove(from,from << 9) && isEmpty(from << 9))
-            if(gameRules.eatingInMyDirection(from, from << 9,opPlayer.state) != 0|| gameRules.eatingInOppositeDirection(from, from << 9,opPlayer.state) != 0)
+            if(gameRules.capturingInMyDirection(from, from << 9,opPlayer.state) != 0|| gameRules.capturingInOppositeDirection(from, from << 9,opPlayer.state) != 0)
                  mask |= from << 9;
         if(gameRules.validMove(from,from >> 10) && isEmpty(from >> 10))
-            if(gameRules.eatingInMyDirection(from, from >> 10,opPlayer.state) != 0|| gameRules.eatingInOppositeDirection(from, from >> 10,opPlayer.state) != 0)
+            if(gameRules.capturingInMyDirection(from, from >> 10,opPlayer.state) != 0|| gameRules.capturingInOppositeDirection(from, from >> 10,opPlayer.state) != 0)
                  mask |= from >> 10;
         if(gameRules.validMove(from,from << 10) && isEmpty(from << 10))
-            if(gameRules.eatingInMyDirection(from, from << 10,opPlayer.state) != 0|| gameRules.eatingInOppositeDirection(from, from << 10,opPlayer.state) != 0)
+            if(gameRules.capturingInMyDirection(from, from << 10,opPlayer.state) != 0|| gameRules.capturingInOppositeDirection(from, from << 10,opPlayer.state) != 0)
                  mask |= from << 10;
         //So we don't get numbers that are outside of the board.
         mask &= fullBoard;
@@ -240,7 +286,7 @@ public class Board
          // The previous direction the player moved in.
         int dir = prevDirection;
         // Checking where would the player go if he continues in the same 
-        // he moved in his last move(during a multiple eating move).
+        // he moved in his last move(during a multiple capturing move).
         if(dir > 0)
         {// Shift right
             dir = (int)(java.lang.Math.log10(dir)/java.lang.Math.log10(2));
@@ -300,14 +346,14 @@ public class Board
         from = m.getFrom();
         to = m.getTo();
         cur = this.turn.equals("pw")?b.white:b.black;
-        op = this.turn.equals("pb")?b.white:b.black;
+        op = this.turn.equals("pb")?b.black:b.white;
         long x = from;
         x = ~x;
         cur.state &= x;
         cur.state |= to;
-        if(m.getEat() != 0)
+        if(m.getCapture() != 0)
         {
-            op.state ^= m.getEat();
+            op.state ^= m.getCapture();
         }
         b.turn = b.turn.equals("pw")?"pb":"pw";
         return b;
@@ -315,18 +361,23 @@ public class Board
     
     public void getOrderedMoves()
     {
+        this.moves = new ArrayList<Move>();
         if(this.turn.equals("pw"))
         {
             // For loop that goes over every piece that the white player has on 
             // the board.
             // Is there a way to make this loop more efficient?
             for(long i = (long)Math.pow(2, 45);i > 0;i /= 2)
-                checkPossibilities(i);
+                if((this.white.state & i) != 0)
+                    checkPossibilities(i);
         }
         else
         {
+            // For loop that goes over every piece that the black player has on 
+            // the board.
             for(long i = 1;i <= this.black.state;i *= 2)
-                checkPossibilities(i);
+                if((this.black.state & i) != 0)
+                    checkPossibilities(i);
         }
     }
     
@@ -341,41 +392,41 @@ public class Board
     public void checkPossibilities(long from)
     {
         Player opPlayer = turn.equals("pw")? black:white;
-        // A variable used to check if the move is an eating move.
-        long eat;
+        // A variable used to check if the move is an capturing move.
+        long capture;
         if(gameRules.validMove(from,from >> 1) && isEmpty(from >> 1))
         {
-            eat = gameRules.eatingInMyDirection(from, from >> 1,opPlayer.state);
-            this.moves.add(new Move(from,from>>1,eat));
-            eat = gameRules.eatingInOppositeDirection(from, from >> 1,opPlayer.state);
-            if(eat != 0)
-                this.moves.add(new Move(from,from>>1,eat));
+            capture= gameRules.capturingInMyDirection(from, from >> 1,opPlayer.state);
+            this.moves.add(new Move(from,from>>1,capture));
+            capture= gameRules.capturingInOppositeDirection(from, from >> 1,opPlayer.state);
+            if(capture!= 0)
+                this.moves.add(new Move(from,from>>1,capture));
         }
         if(gameRules.validMove(from,from << 1) && isEmpty(from << 1))
         {
-            eat = gameRules.eatingInMyDirection(from, from << 1,opPlayer.state);
-            this.moves.add(new Move(from,from<<1,eat));
-            eat = gameRules.eatingInOppositeDirection(from, from << 1,opPlayer.state);
-            if(eat != 0)
-                this.moves.add(new Move(from,from<<1,eat));
+            capture= gameRules.capturingInMyDirection(from, from << 1,opPlayer.state);
+            this.moves.add(new Move(from,from<<1,capture));
+            capture= gameRules.capturingInOppositeDirection(from, from << 1,opPlayer.state);
+            if(capture!= 0)
+                this.moves.add(new Move(from,from<<1,capture));
         }
         for(int i = 8;i <= 10;i++)
         {
             if(gameRules.validMove(from,from >> i) && isEmpty(from >> i))
             {
-                eat = gameRules.eatingInMyDirection(from, from >> i,opPlayer.state);
-                this.moves.add(new Move(from,from>>i,eat));
-                eat = gameRules.eatingInOppositeDirection(from, from >> i,opPlayer.state);
-                if(eat != 0)
-                    this.moves.add(new Move(from,from>>i,eat));
+                capture= gameRules.capturingInMyDirection(from, from >> i,opPlayer.state);
+                this.moves.add(new Move(from,from>>i,capture));
+                capture= gameRules.capturingInOppositeDirection(from, from >> i,opPlayer.state);
+                if(capture!= 0)
+                    this.moves.add(new Move(from,from>>i,capture));
             }
             if(gameRules.validMove(from,from << i) && isEmpty(from << i))
             {
-                eat = gameRules.eatingInMyDirection(from, from << i,opPlayer.state);
-                this.moves.add(new Move(from,from<<i,eat));
-                eat = gameRules.eatingInOppositeDirection(from, from << i,opPlayer.state);
-                if(eat != 0)
-                    this.moves.add(new Move(from,from<<i,eat));
+                capture= gameRules.capturingInMyDirection(from, from << i,opPlayer.state);
+                this.moves.add(new Move(from,from<<i,capture));
+                capture= gameRules.capturingInOppositeDirection(from, from << i,opPlayer.state);
+                if(capture!= 0)
+                    this.moves.add(new Move(from,from<<i,capture));
             }
         }
     }
