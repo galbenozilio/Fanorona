@@ -4,6 +4,7 @@ import java.lang.Long;
 public class Ai
 {
     private int infinity = Integer.MAX_VALUE;
+    private int bla = Integer.MIN_VALUE;
     
     public int alphaBeta(Board board,int depth,int alpha,int beta)
     {

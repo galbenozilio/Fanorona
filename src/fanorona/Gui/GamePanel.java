@@ -12,6 +12,10 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Toolkit;
 import static fanorona.Logic.Board.cellSize;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 
 
 /**
@@ -84,6 +88,12 @@ public class GamePanel extends javax.swing.JPanel {
         board.Click(row,col);
         repaint();
         board.getOneMoreMove();
+        if(board.startAi == true)
+            SwingUtilities.invokeLater(new Runnable(){
+                public void run(){
+                    board.startAi();
+                }   
+            });
         board.checkWin();
     }//GEN-LAST:event_formMousePressed
 

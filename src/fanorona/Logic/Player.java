@@ -11,4 +11,12 @@ public class Player
         this.state = state;
     }
     
+    /**
+     * Copy constructor.
+     */
+    public Player(Player p)
+    {
+        this.state = p.state;
+    }
+    
 }

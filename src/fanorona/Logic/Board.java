@@ -10,6 +10,8 @@ import java.awt.Toolkit;
 import javax.swing.JOptionPane;
 import java.util.ArrayList;
 import java.lang.Math;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 public class Board 
@@ -47,6 +49,8 @@ public class Board
     private Ai ai = new Ai();
     // The depth of search, depth = 6 for the main board.
     public static int depth = 6;
+    // If this is the time to start the Ai
+    public boolean startAi = false;
     
     public Board(GamePanel panel)
     {
@@ -58,12 +62,12 @@ public class Board
     }
     
     /**
-     * Duplicate constructor. 
+     * Copy constructor. 
      */
     public Board(Board b)
     {
-        this.black = b.black;
-        this.white = b.white;
+        this.black = new Player(b.black);
+        this.white = new Player(b.white);
         this.panel = b.panel;
         this.turn = b.turn;
         this.gameRules = new Rules();
@@ -72,6 +76,9 @@ public class Board
 
     public void paint(Graphics gr) 
     {
+        //System.out.println("started painting");
+        //System.out.println("white: "+this.white.state);
+        //System.out.println("black: "+this.black.state);
         long mask = 1;
         for (int i = 0; i < SIZE; i++, mask<<=1)
         {
@@ -103,12 +110,11 @@ public class Board
     {
         return ((to & white.state) == 0 && (to & black.state) == 0);
     }
-
+    
     public void Click(int row, int col)
     {
         if(turn.equals("pw"))
         {
-            //A boolean to determine if the player gets another move or not.
             long mask = 1;
             mask<<=(row*9 + col);
             Player curPlayer = turn.equals("pw")? white:black;
@@ -153,9 +159,7 @@ public class Board
                         endTurn();
                     }
                     else if(capture1 != 0 && capture2 != 0 )
-                    {
                         choose = true;
-                    }
                     else
                     {
                         opPlayer.state ^= capture1;
@@ -181,44 +185,52 @@ public class Board
     {
         turn = turn.equals("pw")?"pb":"pw";
         if(turn.equals("pb") && depth == 6)
+            startAi = true;
+    }
+    
+    public void startAi()
+    {
+        
+        getOrderedMoves();
+        int best = 0;
+        Move m = this.getNextMove();
+        // Holds the best possible move.
+        Move bestMove = m;
+        System.out.println("starting the Ai");
+        System.out.println("number of possible moves: "+this.moves.size());
+        for(int i = 0;i <= this.moves.size();i++)
         {
-            getOrderedMoves();
-            int best = 0;
-            Move m = this.getNextMove();
-            // Holds the best possible move.
-            Move bestMove = m;
-            for(int i = 0;i <= this.moves.size();i++)
+            System.out.println("board before move:");
+            printMe(this);
+            Board b = makeMove(m);
+            System.out.println("board after move:");
+            printMe(this);
+            //b.turn = b.turn.equals("pw")?"pb":"pw";
+            int eval = this.ai.alphaBeta(b,1/*can't reach 5*/, -infinity, infinity );// alpha = -infinity,beta = infinty???
+            if(eval >= best)
             {
-                Board b = new Board(this);
-                b.makeMove(m);
-                b.turn = b.turn.equals("pw")?"pb":"pw";
-                int eval = this.ai.alphaBeta(b,1/*can't reach 5*/, -infinity, infinity );// alpha = -infinity,beta = infinty???
-                if(eval >= best)
-                {
-                    best = eval;
-                    bestMove = m;
-                }
-                m = this.getNextMove();
+                best = eval;
+                bestMove = m;
             }
-            // Performing the best move on the current Board
-            long from,to;
-            // cur = current player,op = opponent player.
-            Player cur,op;
-            from = bestMove.getFrom();
-            to = bestMove.getTo();
-            cur = turn.equals("pw")?white:black;
-            op = turn.equals("pb")?black:white;
-            long x = from;
-            x = ~x;
-            cur.state &= x;
-            cur.state |= to;
-            if(m.getCapture() != 0)
-            {
-                op.state ^= m.getCapture();
-            }
-            depth = 6;  
-            turn = "pw";
+            m = this.getNextMove();
         }
+        // Performing the best move on the current Board
+        long from,to;
+        // cur = current player,op = opponent player.
+        Player cur,op;
+        from = bestMove.getFrom();
+        to = bestMove.getTo();
+        cur = turn.equals("pw")?white:black;
+        op = turn.equals("pw")?black:white;
+        long x = from;
+        x = ~x;
+        cur.state &= x;
+        cur.state |= to;
+        if(m.getCapture() != 0)
+            op.state ^= m.getCapture();
+        depth = 6;  
+        startAi = false;
+        turn = "pw";
     }
     
     public void getOneMoreMove()
@@ -243,7 +255,7 @@ public class Board
     }
     
     /**
-     * Checks if the selected piece can do an capturing move.
+     * Checks if the selected piece can do a capturing move.
      * This method is used after one or more captures, because a player gets an 
      * extra move after capturing only if he has another capturing move he can make 
      * using the same piece.
@@ -346,7 +358,7 @@ public class Board
         from = m.getFrom();
         to = m.getTo();
         cur = this.turn.equals("pw")?b.white:b.black;
-        op = this.turn.equals("pb")?b.black:b.white;
+        op = this.turn.equals("pw")?b.black:b.white;
         long x = from;
         x = ~x;
         cur.state &= x;
@@ -447,4 +459,33 @@ public class Board
         return this.moves.remove(0);
     }
     
+    public void printMe(Board b)
+    {
+        String white = Long.toBinaryString(b.white.state);
+        String black = Long.toBinaryString(b.black.state);
+        int counter = 0;
+        for(int i=0;i<5;i++)
+        {
+            for(int j=0;j<=8;j++)
+            {
+                char wh='0',bl='0';
+                if(j+i*9<white.length())
+                    wh = white.charAt(white.length()-1-(j+i*9));
+                else
+                    wh = '0';
+                if(j+i*9<black.length())
+                    bl = black.charAt(black.length()-1-(j+i*9));
+                else
+                    bl = '0';
+                if(wh!='0')
+                 System.out.print("|w");
+                else if (bl!='0')
+                        System.out.print("|b");
+                else
+                    System.out.print("| ");
+            }
+            System.out.println("|");
+        }
+        System.out.println("");
+    }
 }
