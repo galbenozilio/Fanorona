@@ -192,7 +192,7 @@ public class Board
     {
         
         getOrderedMoves();
-        int best = 0;
+        int best = -infinity;
         Move m = this.getNextMove();
         // Holds the best possible move.
         Move bestMove = m;
@@ -206,7 +206,7 @@ public class Board
             System.out.println("board after move:");
             printMe(this);
             //b.turn = b.turn.equals("pw")?"pb":"pw";
-            int eval = this.ai.alphaBeta(b,1/*can't reach 5*/, -infinity, infinity );// alpha = -infinity,beta = infinty???
+            int eval = this.ai.alphaBeta(b,5/*can't reach 5*/, -infinity, infinity );// alpha = -infinity,beta = infinty???
             if(eval >= best)
             {
                 best = eval;
@@ -226,8 +226,8 @@ public class Board
         x = ~x;
         cur.state &= x;
         cur.state |= to;
-        if(m.getCapture() != 0)
-            op.state ^= m.getCapture();
+        if(bestMove.getCapture() != 0)
+            op.state ^= bestMove.getCapture();
         depth = 6;  
         startAi = false;
         turn = "pw";
@@ -322,11 +322,17 @@ public class Board
     public String checkWin()
     {
         if(black.state == 0)
-            //JOptionPane.showMessageDialog(panel, "White won!");
+        {
+            if(depth == 6)
+                JOptionPane.showMessageDialog(panel, "White won!");
             return "pw";
+        }
         if(white.state == 0)
-            //JOptionPane.showMessageDialog(panel, "Black won!");
+        {
+            if(depth == 6)
+                JOptionPane.showMessageDialog(panel, "Black won!");
             return "pb";
+        }
         return "n";
     }
     
@@ -409,7 +415,12 @@ public class Board
         if(gameRules.validMove(from,from >> 1) && isEmpty(from >> 1))
         {
             capture= gameRules.capturingInMyDirection(from, from >> 1,opPlayer.state);
-            this.moves.add(new Move(from,from>>1,capture));
+            /*if(checkCaptureingPossibilities(from >> 1) != 0)
+            {
+               ArrayList<Move> multiCapture = getExtraCaptures(from >> 1);
+            }
+            else*/
+                this.moves.add(new Move(from,from>>1,capture));
             capture= gameRules.capturingInOppositeDirection(from, from >> 1,opPlayer.state);
             if(capture!= 0)
                 this.moves.add(new Move(from,from>>1,capture));
@@ -488,4 +499,36 @@ public class Board
         }
         System.out.println("");
     }
+    
+    /**
+     * Returns an array list of all the possible capturing moves a piece can do 
+     * after making a capture move.
+     * Gets a starting location and a long number that holds all the possible
+     * steps that cause a capturing.
+     *
+    public ArrayList<Move> getExtraCaptures(long from,long to)
+    {
+        ArrayList<Move> a = new ArrayList<Move>();
+        long op = this.turn.equals("pw")?this.black.state:this.white.state;
+        for(int i = 1;i <= (long)Math.pow(2, 45);i *= 2)
+        {
+            long mask = to & i;
+            if(mask != 0)
+            {
+                long capture1 = gameRules.capturingInMyDirection(from, to, op);
+                long capture2 = gameRules.capturingInOppositeDirection(from, to, op);
+                if(capture1 != 0)
+                {
+                    if(checkCaptureingPossibilities(mask) != 0)
+                    {
+                        long to2 =
+                        for(Move m:b)
+                        {
+                            
+                        }
+                    }
+                }
+            }
+        }
+    }*/
 }

@@ -12,10 +12,12 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Toolkit;
 import static fanorona.Logic.Board.cellSize;
+import java.lang.reflect.InvocationTargetException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
+import sun.swing.SwingUtilities2;
 
 
 /**
@@ -89,11 +91,16 @@ public class GamePanel extends javax.swing.JPanel {
         repaint();
         board.getOneMoreMove();
         if(board.startAi == true)
-            SwingUtilities.invokeLater(new Runnable(){
-                public void run(){
-                    board.startAi();
-                }   
-            });
+        {
+            /*try
+            {
+                Thread.sleep(1000);
+            } catch (InterruptedException ex)
+            {
+                Logger.getLogger(GamePanel.class.getName()).log(Level.SEVERE, null, ex);
+            }*/
+            board.startAi();
+        }
         board.checkWin();
     }//GEN-LAST:event_formMousePressed
 

@@ -25,18 +25,41 @@ public class Rules
         // A mask of every bit on the board that can move in a diagonal.
         long diagonal = 0x0000055555555555L;
         long possible = 0;//0x000000180c060300L;
+        // A mask of every piece on the board that can't move left(edges)
+        // and can't move to the right in diagonal.
+        long left = 0x1008040201L;
+        // A mask of every piece on the board that can't move right(edges).
+        long right = 0x8100804020100L;
+        // A mask of every piece on the board that can't move up(edges).
+        long up = 0x1FFL;
+        // A mask of every piece on the board that can't move down(edges).
+        long down = 0x1FF000000000L;
         long mask = from;
         mask = mask & diagonal;
-        possible |= from>>1;
-        possible |= from<<1;
-        possible |= from<<9;
-        possible |= from>>9;
+        if((from & left) == 0)
+            possible |= from>>1;
+        if((from & right) == 0)
+            possible |= from<<1;
+        if((from & down) == 0)
+            possible |= from<<9;
+        if((from & up) == 0)
+            possible |= from>>9;
         if(mask != 0)
         {
-            possible |= from<<10;
-            possible |= from<<8;
-            possible |= from>>10;
-            possible |= from>>8;
+            if((from & down) == 0)
+            {
+                if((from & right) == 0)
+                    possible |= from<<10;
+                if((from & left) == 0)
+                    possible |= from<<8;
+            }
+            if((from & up) == 0)
+            {
+                if((from & left) == 0)
+                    possible |= from>>10;
+                if((from & right) == 0)
+                    possible |= from>>8;
+            }
         }
         return (to & possible) != 0;
     }

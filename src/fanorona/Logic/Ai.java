@@ -43,10 +43,10 @@ public class Ai
     {
         int eval;
         if(!board.checkWin().equals("n"))
-            eval = infinity;
+            return  infinity;//eval = infinity;
         else
             eval = countBits(board.getWhiteState()) - countBits(board.getBlackState());
-        return board.turn == "pw"?eval:-eval;
+        return board.turn == "pb"?eval:-eval;
     }
     
     public static int countBits(long number)
