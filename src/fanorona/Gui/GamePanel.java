@@ -92,7 +92,6 @@ public class GamePanel extends javax.swing.JPanel {
         board.getOneMoreMove();
         if(board.startAi == true)
             board = board.startAi();
-            
         board.checkWin();
     }//GEN-LAST:event_formMousePressed
 

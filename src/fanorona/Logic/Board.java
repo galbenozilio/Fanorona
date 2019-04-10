@@ -54,8 +54,8 @@ public class Board
     
     public Board(GamePanel panel)
     {
-        black = new Player(0x000000000297ffffL);//*/1);
-        white = new Player(0x00001ffffd280000L);//*/0x8101004L);
+        black = new Player(0x000000000297ffffL);//0x0000000052BFFFFL);//);//*/1);
+        white = new Player(0x00001ffffd280000L);//0x00001FFFFA940000L);//);//*/0x8101004L);
         this.panel = panel;
         turn = "pw";
         this.gameRules = new Rules();
@@ -221,20 +221,21 @@ public class Board
             int size = this.moves.size();
             // Holds the best possible move.
             Move bestMove = this.moves.get(0);
-            System.out.println("starting the Ai");
-            System.out.println("number of possible moves: "+this.moves.size());
+            //System.out.println("starting the Ai");
+            //System.out.println("number of possible moves: "+this.moves.size());
             for(int i = 0;i < size;i++)
             {
                 Move m = this.getNextMove();
                 Board b = makeMove(m);
                 int eval = this.ai.alphaBeta(b,4, -infinity, infinity );
-                System.out.println("finished frist eval");
+                //System.out.println("finished frist eval");
                 if(eval >= best)
                 {
                     best = eval;
                     bestMove = m;
                 }
             }
+            printMove(bestMove);
             newBoard = makeMove(bestMove);
             /*this = new Board(b);
             // Performing the best move on the current Board
@@ -256,6 +257,16 @@ public class Board
         }
         newBoard.turn = "pw";
         return newBoard;
+    }
+    
+    public void printMove(Move m)
+    {
+        System.out.println("from: " + (java.lang.Math.log10(m.getFrom())/java.lang.Math.log10(2)+1));
+        System.out.println("to: " + (java.lang.Math.log10(m.getTo())/java.lang.Math.log10(2)+1));
+        System.out.println("capture: " + m.getCapture());
+        if(m.getExtraCapture() != null)
+            printMove(m.getExtraCapture());
+        
     }
     
     public void getOneMoreMove()
@@ -644,10 +655,10 @@ public class Board
         return this.moves.remove(0);
     }
     
-    /*public void printMe(Board b)
+    public void printMe(long w,long b)
     {
-        String white = Long.toBinaryString(b.white.state);
-        String black = Long.toBinaryString(b.black.state);
+        String white = Long.toBinaryString(w);
+        String black = Long.toBinaryString(b);
         int counter = 0;
         for(int i=0;i<5;i++)
         {
@@ -672,7 +683,7 @@ public class Board
             System.out.println("|");
         }
         System.out.println("");
-    }*/
+    }
     
     /**
      * Returns an array list of all the possible capturing moves a piece can do 

@@ -24,7 +24,7 @@ public class Ai
             move = board.getNextMove();
             nextBoard = board.makeMove(move);
             value = -alphaBeta(nextBoard, depth-1,-beta,-alpha);
-            System.out.println(depth);
+            //System.out.println(depth);
             if(value > best)
                 best = value;
             if(best > alpha)
