@@ -6,14 +6,15 @@ public class Move
     private long to;
     private long capture;
     // If the move is a multi capture move, this variable has the next move 
-    //private Move extraCapture;
+    private Move extraCapture;
     
-    public Move(long from,long to,long capture)//,Move extraCapture)
+    public Move(long from,long to,long capture,Move extraCapture)
     {
         this.from = from;
         this.to = to;
         this.capture = capture;
-        //this.extraCapture = new Move(extraCapture);
+        if(extraCapture != null)
+            this.extraCapture = new Move(extraCapture);
     }
     
     public Move(Move m)
@@ -21,7 +22,8 @@ public class Move
         this.from = m.from;
         this.to = m.to;
         this.capture = m.capture;
-        //this.extraCapture = new Move(m.extraCapture);
+        if(m.extraCapture != null)
+            this.extraCapture = new Move(m.extraCapture);
     }
 
     public long getFrom()
@@ -52,6 +54,16 @@ public class Move
     public void setCapture(long capture)
     {
         this.capture = capture;
+    }
+
+    public Move getExtraCapture()
+    {
+        return extraCapture;
+    }
+
+    public void setExtraCapture(Move extraCapture)
+    {
+        this.extraCapture = new Move(extraCapture);
     }
     
     

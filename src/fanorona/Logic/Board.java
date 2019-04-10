@@ -47,15 +47,15 @@ public class Board
     private ArrayList<Move> moves;
     private int infinity = Integer.MAX_VALUE;
     private Ai ai = new Ai();
-    // The depth of search, depth = 6 for the main board.
-    public static int depth = 6;
+    // The depth of search, depth = 5 for the main board.
+    public static int depth = 5;
     // If this is the time to start the Ai
     public boolean startAi = false;
     
     public Board(GamePanel panel)
     {
-        black = new Player(0x000000000297ffffL);
-        white = new Player(0x00001ffffd280000L);
+        black = new Player(0x000000000297ffffL);//*/1);
+        white = new Player(0x00001ffffd280000L);//*/0x8101004L);
         this.panel = panel;
         turn = "pw";
         this.gameRules = new Rules();
@@ -70,6 +70,22 @@ public class Board
         this.white = new Player(b.white);
         this.panel = b.panel;
         this.turn = b.turn;
+        this.gameRules = new Rules();
+        depth--;
+    }
+    
+    /**
+     * A constructor used for multiple captures moves the Ai makes.
+     * Gets the players state,the turn, the previous direction the player moved 
+     * in and the previous locations he visited.
+     */
+    public Board(long white,long black,String turn,int prev,int prevDir)
+    {
+        this.black = new Player(black);
+        this.white = new Player(white);
+        this.turn = turn;
+        this.prev = prev;
+        this.prevDirection = prevDir;
         this.gameRules = new Rules();
         depth--;
     }
@@ -102,13 +118,20 @@ public class Board
     
     
     /**
-     * Checks if a move is valid.
-     * Uses the validMove function to check if the piece can move in the 
-     * chosen direction, and to check if the spot is empty.
+     * Checks if a spot on the board is empty.
      */
     public boolean isEmpty(long to)
     {
         return ((to & white.state) == 0 && (to & black.state) == 0);
+    }
+    
+    /**
+     * Checks if a spot on the board is empty.
+     * Gets a location, and the state of the board
+     */
+    public boolean isEmpty(long to,long board)
+    {
+        return (to & board) == 0;
     }
     
     public void Click(int row, int col)
@@ -184,53 +207,55 @@ public class Board
     public void endTurn()
     {
         turn = turn.equals("pw")?"pb":"pw";
-        if(turn.equals("pb") && depth == 6)
+        if(turn.equals("pb") && depth == 5)
             startAi = true;
     }
     
-    public void startAi()
+    public Board startAi()
     {
-        
+        Board newBoard = new Board(this);
         getOrderedMoves();
         int best = -infinity;
-        Move m = this.getNextMove();
-        // Holds the best possible move.
-        Move bestMove = m;
-        System.out.println("starting the Ai");
-        System.out.println("number of possible moves: "+this.moves.size());
-        for(int i = 0;i <= this.moves.size();i++)
+        if(moves.size() != 0)
         {
-            System.out.println("board before move:");
-            printMe(this);
-            Board b = makeMove(m);
-            System.out.println("board after move:");
-            printMe(this);
-            //b.turn = b.turn.equals("pw")?"pb":"pw";
-            int eval = this.ai.alphaBeta(b,5/*can't reach 5*/, -infinity, infinity );// alpha = -infinity,beta = infinty???
-            if(eval >= best)
+            int size = this.moves.size();
+            // Holds the best possible move.
+            Move bestMove = this.moves.get(0);
+            System.out.println("starting the Ai");
+            System.out.println("number of possible moves: "+this.moves.size());
+            for(int i = 0;i < size;i++)
             {
-                best = eval;
-                bestMove = m;
+                Move m = this.getNextMove();
+                Board b = makeMove(m);
+                int eval = this.ai.alphaBeta(b,4, -infinity, infinity );
+                System.out.println("finished frist eval");
+                if(eval >= best)
+                {
+                    best = eval;
+                    bestMove = m;
+                }
             }
-            m = this.getNextMove();
+            newBoard = makeMove(bestMove);
+            /*this = new Board(b);
+            // Performing the best move on the current Board
+            long from,to;
+            // cur = current player,op = opponent player.
+            Player cur,op;
+            from = bestMove.getFrom();
+            to = bestMove.getTo();
+            cur = turn.equals("pw")?white:black;
+            op = turn.equals("pw")?black:white;
+            long x = from;
+            x = ~x;
+            cur.state &= x;
+            cur.state |= to;
+            if(bestMove.getCapture() != 0)
+                op.state ^= bestMove.getCapture();*/
+            newBoard.depth = 5;  
+            newBoard.startAi = false;
         }
-        // Performing the best move on the current Board
-        long from,to;
-        // cur = current player,op = opponent player.
-        Player cur,op;
-        from = bestMove.getFrom();
-        to = bestMove.getTo();
-        cur = turn.equals("pw")?white:black;
-        op = turn.equals("pw")?black:white;
-        long x = from;
-        x = ~x;
-        cur.state &= x;
-        cur.state |= to;
-        if(bestMove.getCapture() != 0)
-            op.state ^= bestMove.getCapture();
-        depth = 6;  
-        startAi = false;
-        turn = "pw";
+        newBoard.turn = "pw";
+        return newBoard;
     }
     
     public void getOneMoreMove()
@@ -323,13 +348,13 @@ public class Board
     {
         if(black.state == 0)
         {
-            if(depth == 6)
+            if(depth == 5)
                 JOptionPane.showMessageDialog(panel, "White won!");
             return "pw";
         }
         if(white.state == 0)
         {
-            if(depth == 6)
+            if(depth == 5)
                 JOptionPane.showMessageDialog(panel, "Black won!");
             return "pb";
         }
@@ -372,6 +397,15 @@ public class Board
         if(m.getCapture() != 0)
         {
             op.state ^= m.getCapture();
+            while(m.getExtraCapture() != null)
+            {
+                m = m.getExtraCapture();
+                x = m.getFrom();
+                x = ~x;
+                cur.state &= x;
+                cur.state |= m.getTo();
+                op.state ^= m.getCapture();
+            }
         }
         b.turn = b.turn.equals("pw")?"pb":"pw";
         return b;
@@ -410,46 +444,186 @@ public class Board
     public void checkPossibilities(long from)
     {
         Player opPlayer = turn.equals("pw")? black:white;
+        Player curPlayer = turn.equals("pw")? white:black;
         // A variable used to check if the move is an capturing move.
         long capture;
+        Board copy;
+        // ArryList that contains all the possible multiple eating moves for 
+        // every move.
+        ArrayList<Move> a = new ArrayList<Move>();
         if(gameRules.validMove(from,from >> 1) && isEmpty(from >> 1))
         {
             capture= gameRules.capturingInMyDirection(from, from >> 1,opPlayer.state);
-            /*if(checkCaptureingPossibilities(from >> 1) != 0)
+            if(capture != 0)
             {
-               ArrayList<Move> multiCapture = getExtraCaptures(from >> 1);
+                int dir = (int) (from>from>>1? from/from>>1:-from/from>>1);
+                long x = from;
+                x = ~x;
+                long cur = curPlayer.state,op = opPlayer.state;
+                cur &= x;
+                cur |= from >> 1;
+                op ^= capture;
+                a = getExtraCaptures(from>>1,from|from>>1,dir,cur,op);
+                if(a.size() != 0)
+                {
+                    for(int i = 0;i < a.size();i++)
+                        this.moves.add(new Move(from,from>>1,capture,a.get(i)));
+                }
+                else
+                    this.moves.add(new Move(from,from>>1,capture,null));
             }
-            else*/
-                this.moves.add(new Move(from,from>>1,capture));
+            else
+                this.moves.add(new Move(from,from>>1,capture,null));
             capture= gameRules.capturingInOppositeDirection(from, from >> 1,opPlayer.state);
-            if(capture!= 0)
-                this.moves.add(new Move(from,from>>1,capture));
+            if(capture != 0)
+            {
+                int dir = (int) (from>from>>1? from/from>>1:-from/from>>1);
+                long x = from;
+                x = ~x;
+                long cur = curPlayer.state,op = opPlayer.state;
+                cur &= x;
+                cur |= from >> 1;
+                op ^= capture;
+                a = getExtraCaptures(from>>1,from|from>>1,dir,cur,op);
+                if(a.size() != 0)
+                {
+                    for(int i = 0;i < a.size();i++)
+                        this.moves.add(new Move(from,from>>1,capture,a.get(i)));
+                }
+                else
+                    this.moves.add(new Move(from,from>>1,capture,null));
+            }
         }
         if(gameRules.validMove(from,from << 1) && isEmpty(from << 1))
         {
             capture= gameRules.capturingInMyDirection(from, from << 1,opPlayer.state);
-            this.moves.add(new Move(from,from<<1,capture));
+            if(capture != 0)
+            {
+                int dir = (int) (from>from<<1? from/from<<1:-from/from<<1);
+                long x = from;
+                x = ~x;
+                long cur = curPlayer.state,op = opPlayer.state;
+                cur &= x;
+                cur |= from << 1;
+                op ^= capture;
+                a = getExtraCaptures(from<<1,from|from<<1,dir,cur,op);
+                if(a.size() != 0)
+                {
+                    for(int i = 0;i < a.size();i++)
+                        this.moves.add(new Move(from,from<<1,capture,a.get(i)));
+                }
+                else
+                    this.moves.add(new Move(from,from<<1,capture,null));
+            }
+            else
+                this.moves.add(new Move(from,from<<1,capture,null));
             capture= gameRules.capturingInOppositeDirection(from, from << 1,opPlayer.state);
-            if(capture!= 0)
-                this.moves.add(new Move(from,from<<1,capture));
+            if(capture != 0)
+            {
+                int dir = (int) (from>from<<1? from/from<<1:-from/from<<1);
+                long x = from;
+                x = ~x;
+                long cur = curPlayer.state,op = opPlayer.state;
+                cur &= x;
+                cur |= from << 1;
+                op ^= capture;
+                a = getExtraCaptures(from<<1,from|from<<1,dir,cur,op);
+                if(a.size() != 0)
+                {
+                    for(int i = 0;i < a.size();i++)
+                        this.moves.add(new Move(from,from<<1,capture,a.get(i)));
+                }
+                else
+                    this.moves.add(new Move(from,from<<1,capture,null));
+            }
         }
         for(int i = 8;i <= 10;i++)
         {
             if(gameRules.validMove(from,from >> i) && isEmpty(from >> i))
             {
                 capture= gameRules.capturingInMyDirection(from, from >> i,opPlayer.state);
-                this.moves.add(new Move(from,from>>i,capture));
+                if(capture != 0)
+                {
+                    int dir = (int) (from>from>>i? from/from>>i:-from/from>>i);
+                    long x = from;
+                    x = ~x;
+                    long cur = curPlayer.state,op = opPlayer.state;
+                    cur &= x;
+                    cur |= from >> i;
+                    op ^= capture;
+                    a = getExtraCaptures(from>>i,from|from>>i,dir,cur,op);
+                    if(a.size() != 0)
+                    {
+                        for(int j = 0;j < a.size();j++)
+                            this.moves.add(new Move(from,from>>i,capture,a.get(j)));
+                    }
+                    else
+                        this.moves.add(new Move(from,from>>i,capture,null));
+                }
+                else
+                    this.moves.add(new Move(from,from>>i,capture,null));
                 capture= gameRules.capturingInOppositeDirection(from, from >> i,opPlayer.state);
-                if(capture!= 0)
-                    this.moves.add(new Move(from,from>>i,capture));
+                if(capture != 0)
+                {
+                    int dir = (int) (from>from>>i? from/from>>i:-from/from>>i);
+                    long x = from;
+                    x = ~x;
+                    long cur = curPlayer.state,op = opPlayer.state;
+                    cur &= x;
+                    cur |= from >> i;
+                    op ^= capture;
+                    a = getExtraCaptures(from>>i,from|from>>i,dir,cur,op);
+                    if(a.size() != 0)
+                    {
+                        for(int j = 0;j < a.size();j++)
+                            this.moves.add(new Move(from,from>>i,capture,a.get(j)));
+                    }
+                    else
+                        this.moves.add(new Move(from,from>>i,capture,null));
+                }
             }
             if(gameRules.validMove(from,from << i) && isEmpty(from << i))
             {
                 capture= gameRules.capturingInMyDirection(from, from << i,opPlayer.state);
-                this.moves.add(new Move(from,from<<i,capture));
+                if(capture != 0)
+                {
+                    int dir = (int) (from>from<<i? from/from<<i:-from/from<<i);
+                    long x = from;
+                    x = ~x;
+                    long cur = curPlayer.state,op = opPlayer.state;
+                    cur &= x;
+                    cur |= from << i;
+                    op ^= capture;
+                    a = getExtraCaptures(from<<i,from|from<<i,dir,cur,op);
+                    if(a.size() != 0)
+                    {
+                        for(int j = 0;j < a.size();j++)
+                            this.moves.add(new Move(from,from<<i,capture,a.get(j)));
+                    }
+                    else
+                        this.moves.add(new Move(from,from<<i,capture,null));
+                }
+                else
+                    this.moves.add(new Move(from,from<<i,capture,null));
                 capture= gameRules.capturingInOppositeDirection(from, from << i,opPlayer.state);
-                if(capture!= 0)
-                    this.moves.add(new Move(from,from<<i,capture));
+                if(capture != 0)
+                {
+                    int dir = (int) (from>from<<i? from/from<<i:-from/from<<i);
+                    long x = from;
+                    x = ~x;
+                    long cur = curPlayer.state,op = opPlayer.state;
+                    cur &= x;
+                    cur |= from << i;
+                    op ^= capture;
+                    a = getExtraCaptures(from<<i,from|from<<i,dir,cur,op);
+                    if(a.size() != 0)
+                    {
+                        for(int j = 0;j < a.size();j++)
+                            this.moves.add(new Move(from,from<<i,capture,a.get(j)));
+                    }
+                    else
+                        this.moves.add(new Move(from,from<<i,capture,null));
+                }
             }
         }
     }
@@ -470,7 +644,7 @@ public class Board
         return this.moves.remove(0);
     }
     
-    public void printMe(Board b)
+    /*public void printMe(Board b)
     {
         String white = Long.toBinaryString(b.white.state);
         String black = Long.toBinaryString(b.black.state);
@@ -498,37 +672,100 @@ public class Board
             System.out.println("|");
         }
         System.out.println("");
-    }
+    }*/
     
     /**
      * Returns an array list of all the possible capturing moves a piece can do 
      * after making a capture move.
      * Gets a starting location and a long number that holds all the possible
      * steps that cause a capturing.
-     *
-    public ArrayList<Move> getExtraCaptures(long from,long to)
+     * prev - the previous locations the player visited (can't be revisited in 
+     * the current move).
+     * prevDir - the previous direction the player moved in - can't repeat that 
+     * direction in the current move).
+     * cur - current player state,op - opponent player state.
+     */
+    public ArrayList<Move> getExtraCaptures(long from,long prev,int prevDir,long cur,long op)
     {
         ArrayList<Move> a = new ArrayList<Move>();
-        long op = this.turn.equals("pw")?this.black.state:this.white.state;
-        for(int i = 1;i <= (long)Math.pow(2, 45);i *= 2)
+        // forbidden - the move the player can't make.
+        long c1,c2,forbidden;
+        if(prevDir > 0)
+        {// Shift right
+            prevDir = (int)(java.lang.Math.log10(prevDir)/java.lang.Math.log10(2));
+            forbidden = from >> prevDir;
+        }
+        else
+        {// Shift left
+            prevDir = (int)(java.lang.Math.log10(-prevDir)/java.lang.Math.log10(2));
+            forbidden = from << prevDir;
+        }
+        if(gameRules.validMove(from,from >> 1) && isEmpty(from >> 1,cur|op) 
+                && (prev & from >> 1) == 0 && (from >> 1) != forbidden)
         {
-            long mask = to & i;
-            if(mask != 0)
+            c1 = gameRules.capturingInMyDirection(from, from >> 1,op);
+            c2 = gameRules.capturingInOppositeDirection(from, from >> 1,op);
+            if(c1 != 0)
+                a.add(new Move(from,from>>1,c1,null));
+            if(c2 != 0)
+                a.add(new Move(from,from>>1,c2,null));
+        }
+        if(gameRules.validMove(from,from << 1) && isEmpty(from << 1,cur|op)
+                && (prev & from << 1) == 0 && (from << 1) != forbidden)
+        {
+            c1 = gameRules.capturingInMyDirection(from, from << 1,op);
+            c2 = gameRules.capturingInOppositeDirection(from, from << 1,op);
+            if(c1 != 0)
+                a.add(new Move(from,from<<1,c1,null));
+            if(c2 != 0)
+                a.add(new Move(from,from<<1,c2,null));
+        }
+        for(int i = 8;i <= 10;i++)
+        {
+            if(gameRules.validMove(from,from >> i) && isEmpty(from >> i,cur|op)
+                    && (prev & from >> i) == 0 && (from >> i) != forbidden)
             {
-                long capture1 = gameRules.capturingInMyDirection(from, to, op);
-                long capture2 = gameRules.capturingInOppositeDirection(from, to, op);
-                if(capture1 != 0)
+                c1 = gameRules.capturingInMyDirection(from, from >> i,op);
+                c2 = gameRules.capturingInOppositeDirection(from, from >> i,op);
+                if(c1 != 0)
+                    a.add(new Move(from,from>>i,c1,null));
+                if(c2 != 0)
+                    a.add(new Move(from,from>>i,c2,null));
+            } 
+            if(gameRules.validMove(from,from << i) && isEmpty(from << i,cur|op)
+                    && (prev & from << i) == 0 && (from << i) != forbidden)
+            {
+                c1 = gameRules.capturingInMyDirection(from, from << i,op);
+                c2 = gameRules.capturingInOppositeDirection(from, from << i,op);
+                if(c1 != 0)
+                    a.add(new Move(from,from<<i,c1,null));
+                if(c2 != 0)
+                    a.add(new Move(from,from<<i,c2,null));
+            }
+        }
+        for(int i = 0;i < a.size();i++)
+        {
+            Move m = a.get(i);
+            int dir = (int) (m.getFrom()>m.getTo()? m.getFrom()/m.getTo():-m.getTo()/m.getFrom()); 
+            long x = m.getFrom();
+            x = ~x;
+            long copyCur = cur,copyOp = op;
+            copyCur &= x;
+            copyCur |= m.getTo();
+            if(m.getCapture() != 0)
+                copyOp ^= m.getCapture();
+            ArrayList<Move> b = getExtraCaptures(m.getTo(),prev|m.getTo(),dir,copyCur,copyOp);
+            for(int j = 0;j < b.size();j++)
+            {
+                if(j == 0)
+                    m.setExtraCapture(b.get(j));
+                else
                 {
-                    if(checkCaptureingPossibilities(mask) != 0)
-                    {
-                        long to2 =
-                        for(Move m:b)
-                        {
-                            
-                        }
-                    }
+                    Move m2 = new Move(m);
+                    m2.setExtraCapture(b.get(j));
                 }
             }
         }
-    }*/
+        return a;
+    }
 }

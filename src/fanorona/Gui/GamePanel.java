@@ -91,16 +91,8 @@ public class GamePanel extends javax.swing.JPanel {
         repaint();
         board.getOneMoreMove();
         if(board.startAi == true)
-        {
-            /*try
-            {
-                Thread.sleep(1000);
-            } catch (InterruptedException ex)
-            {
-                Logger.getLogger(GamePanel.class.getName()).log(Level.SEVERE, null, ex);
-            }*/
-            board.startAi();
-        }
+            board = board.startAi();
+            
         board.checkWin();
     }//GEN-LAST:event_formMousePressed
 
