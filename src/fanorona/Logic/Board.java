@@ -51,11 +51,18 @@ public class Board
     public static int depth = 5;
     // If this is the time to start the Ai
     public boolean startAi = false;
+    // If it is time to start the endGame strategy.
+    public static boolean endGame = true;
+
+    public boolean isEndGame()
+    {
+        return endGame;
+    }
     
     public Board(GamePanel panel)
     {
-        black = new Player(0x000000000297ffffL);//0x0000000052BFFFFL);//);//*/1);
-        white = new Player(0x00001ffffd280000L);//0x00001FFFFA940000L);//);//*/0x8101004L);
+        black = new Player(/*0x000000000297ffffL);//0x0000000052BFFFFL);//);//1);*/1024);
+        white = new Player(/*0x00001ffffd280000L);//0x00001FFFFA940000L);//);//0x8101004L);*/0x12008002000L);
         this.panel = panel;
         turn = "pw";
         this.gameRules = new Rules();
@@ -178,6 +185,8 @@ public class Board
                     anotherMove = (capture1 != 0 || capture2 != 0);
                     if(capture1 == 0 && capture2 == 0)
                     {// If the move is not an capturing move
+                        if(ai.countBits(white.state) + ai.countBits(black.state) <= 14)
+                            endGame = true;
                         selected = 0;
                         endTurn();
                     }
@@ -213,6 +222,8 @@ public class Board
     
     public Board startAi()
     {
+        if(ai.countBits(white.state) + ai.countBits(black.state) <= 7)
+            endGame = true;
         Board newBoard = new Board(this);
         getOrderedMoves();
         int best = -infinity;
@@ -236,6 +247,8 @@ public class Board
                 }
             }
             printMove(bestMove);
+            if(bestMove.getCapture() == 0 && ai.countBits(white.state) + ai.countBits(black.state) <= 14)
+                endGame = true;
             newBoard = makeMove(bestMove);
             /*this = new Board(b);
             // Performing the best move on the current Board
