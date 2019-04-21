@@ -52,7 +52,12 @@ public class Board
     // If this is the time to start the Ai
     public boolean startAi = false;
     // If it is time to start the endGame strategy.
-    public static boolean endGame = true;
+    public static boolean endGame = false;
+    // If the ai is in a losing state when the endGame begins it will enter a 
+    // defensive mode trting to achive a tie.
+    private static boolean defensiveMode = false;
+    // If there are 15 moves in a row without capturnig, the game ends in a tie.
+    public static int tie = 0;
 
     public boolean isEndGame()
     {
@@ -61,8 +66,8 @@ public class Board
     
     public Board(GamePanel panel)
     {
-        black = new Player(/*0x000000000297ffffL);//0x0000000052BFFFFL);//);//1);*/1024);
-        white = new Player(/*0x00001ffffd280000L);//0x00001FFFFA940000L);//);//0x8101004L);*/0x12008002000L);
+        black = new Player(0x000000000297ffffL);//0x0000000052BFFFFL);//);//1);*/1024);
+        white = new Player(0x00001ffffd280000L);//0x00001FFFFA940000L);//);//0x8101004L);*/0x12008002000L);
         this.panel = panel;
         turn = "pw";
         this.gameRules = new Rules();
@@ -185,19 +190,24 @@ public class Board
                     anotherMove = (capture1 != 0 || capture2 != 0);
                     if(capture1 == 0 && capture2 == 0)
                     {// If the move is not an capturing move
-                        if(ai.countBits(white.state) + ai.countBits(black.state) <= 14)
-                            endGame = true;
+                        if(endGame = false && ai.countBits(white.state) + ai.countBits(black.state) <= 14)
+                            startEndGame();
                         selected = 0;
+                        tie++;
                         endTurn();
                     }
-                    else if(capture1 != 0 && capture2 != 0 )
+                    else if(capture1 != 0 && capture2 != 0)
+                    {
                         choose = true;
+                        tie = 0;
+                    }
                     else
                     {
                         opPlayer.state ^= capture1;
                         opPlayer.state ^= capture2;
                         capture1 = 0;
                         capture2 = 0;
+                        tie = 0;
                     }
                 }
                 else if(mask == selected && !anotherMove)
@@ -222,8 +232,8 @@ public class Board
     
     public Board startAi()
     {
-        if(ai.countBits(white.state) + ai.countBits(black.state) <= 7)
-            endGame = true;
+        if(endGame = false && ai.countBits(white.state) + ai.countBits(black.state) <= 7)
+            startEndGame();
         Board newBoard = new Board(this);
         getOrderedMoves();
         int best = -infinity;
@@ -239,6 +249,12 @@ public class Board
                 Move m = this.getNextMove();
                 Board b = makeMove(m);
                 int eval = this.ai.alphaBeta(b,4, -infinity, infinity );
+                if(defensiveMode = true)
+                {
+                    long cur = turn.equals("pw")? white.state:black.state;
+                    long newCur = turn.equals("pw")? b.getWhiteState():b.getBlackState();
+                    eval -= 10*(ai.checkThreats(b));
+                }
                 //System.out.println("finished frist eval");
                 if(eval >= best)
                 {
@@ -247,24 +263,13 @@ public class Board
                 }
             }
             printMove(bestMove);
-            if(bestMove.getCapture() == 0 && ai.countBits(white.state) + ai.countBits(black.state) <= 14)
-                endGame = true;
+            if(endGame = false && bestMove.getCapture() == 0 && ai.countBits(white.state) + ai.countBits(black.state) <= 14)
+                startEndGame();
+            if(bestMove.getCapture() == 0)
+                tie++;
+            else
+                tie = 0;
             newBoard = makeMove(bestMove);
-            /*this = new Board(b);
-            // Performing the best move on the current Board
-            long from,to;
-            // cur = current player,op = opponent player.
-            Player cur,op;
-            from = bestMove.getFrom();
-            to = bestMove.getTo();
-            cur = turn.equals("pw")?white:black;
-            op = turn.equals("pw")?black:white;
-            long x = from;
-            x = ~x;
-            cur.state &= x;
-            cur.state |= to;
-            if(bestMove.getCapture() != 0)
-                op.state ^= bestMove.getCapture();*/
             newBoard.depth = 5;  
             newBoard.startAi = false;
         }
@@ -381,6 +386,12 @@ public class Board
             if(depth == 5)
                 JOptionPane.showMessageDialog(panel, "Black won!");
             return "pb";
+        }
+        if(tie >= 15)
+        {
+            if(depth == 5)
+                JOptionPane.showMessageDialog(panel, "It's a tie!");
+            return "t";
         }
         return "n";
     }
@@ -791,5 +802,14 @@ public class Board
             }
         }
         return a;
+    }
+    
+    public void startEndGame()
+    {
+        endGame = true;
+        long cur = turn.equals("pw")? white.state:black.state;
+        long op = turn.equals("pw")? black.state:white.state;
+        if(ai.countBits(cur) - ai.countBits(op) < 0)
+            defensiveMode = true;
     }
 }

@@ -68,7 +68,7 @@ public class Ai
         if(!board.checkWin().equals("n"))
             return  infinity;
         eval = countBits(board.getWhiteState()) - countBits(board.getBlackState());
-        eval = eval - checkThreats(board);
+        eval = eval - 8*checkThreats(board);
         return board.turn == "pb"?eval:-eval;
     }
     
@@ -92,7 +92,7 @@ public class Ai
     {
         long cur = b.turn.equals("pw")?b.getWhiteState():b.getBlackState();
         long op = b.turn.equals("pw")?b.getBlackState():b.getWhiteState();
-        // For loop that goes over every piece that the black player has on 
+        // For loop that goes over every piece that the current player has on 
         // the board.
         int count = 0;
         for(long i = 1;i <= cur;i *= 2)
