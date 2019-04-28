@@ -5,13 +5,14 @@ import java.lang.Math;
 public class Rules
 {
 
-    // A mask of every piece on the boarders of the board, when capturing a ???
-    // few pieces in a row, capturing must stop at the end of the line.???????
+    // A mask of every piece on the boarders of the board, when capturing a 
+    // few pieces in a row, capturing must stop at the end of the line.
     public static final long wall = 0x000000180C060300L;
     // A mask of a full board.
     public static final long fullBoard = 0x00001FFFFFFFFFFFL;
     // The previous direction the player moved to in his multiple capturing move.
     //private int prevDirection = 0;
+    
     /**
      * Checks if the piece can move to the location the user wanted.
      * Creates a mask of all the possible directions the piece can move in.
@@ -20,7 +21,7 @@ public class Rules
      * Returns true if the requested location is a possible location for the
      * piece. 
      */
-    public static boolean validMove(long from,long to)
+        public static boolean validMove(long from,long to)
     {
         // A mask of every bit on the board that can move in a diagonal.
         long diagonal = 0x0000055555555555L;
@@ -35,7 +36,6 @@ public class Rules
         // A mask of every piece on the board that can't move down(edges).
         long down = 0x1FF000000000L;
         long mask = from;
-        mask = mask & diagonal;
         if((from & left) == 0)
             possible |= from>>1;
         if((from & right) == 0)
@@ -44,6 +44,7 @@ public class Rules
             possible |= from<<9;
         if((from & up) == 0)
             possible |= from>>9;
+        mask = mask & diagonal;
         if(mask != 0)
         {
             if((from & down) == 0)
@@ -70,7 +71,7 @@ public class Rules
      * the opponent's pieces.
      * Returns a long number containing the locations of the captured pieces.
      */
-    public long capturingInMyDirection (long from,long to,long op)
+    public static long capturingInMyDirection (long from,long to,long op)
     {
         int dir = (int) (from>to? from/to:-to/from);
         return capturing(from,dir,op);
@@ -82,7 +83,7 @@ public class Rules
      * the opponent's pieces.
      * Returns a long number containing the locations of the captured pieces.
      */
-    public long capturingInOppositeDirection(long from,long to,long op)
+    public static long capturingInOppositeDirection(long from,long to,long op)
     {
         int dir = (int) (to>from? to/from:-from/to);
         return capturing(to,dir,op);
@@ -94,7 +95,7 @@ public class Rules
      * locations of the captured pieces.
      * Note : log[2](x) = log[10]x/log[10]2
      */
-    public long capturing(long from,int dir,long op)
+    public static long capturing(long from,int dir,long op)
     {
         long mask = 0, temp;
         if(dir > 0)

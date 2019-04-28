@@ -91,7 +91,22 @@ public class GamePanel extends javax.swing.JPanel {
         repaint();
         board.getOneMoreMove();
         if(board.startAi == true)
-            board = board.startAi();
+        {
+            new Thread(){ 	//Creating an object of Anonymous class that extends Thread class
+                public void run()	//Anonymous class overriding run() method of Thread class
+                {
+                    try
+                    {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ex)
+                    {
+                        Logger.getLogger(GamePanel.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    board = board.startAi();
+                    repaint();
+                }
+            }.start(); 
+        }
         board.checkWin();
     }//GEN-LAST:event_formMousePressed
 

@@ -3,15 +3,12 @@ package fanorona.Logic;
 
 import fanorona.Gui.GamePanel;
 import static fanorona.Logic.Rules.fullBoard;
-import static fanorona.Logic.Rules.validMove;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Toolkit;
 import javax.swing.JOptionPane;
 import java.util.ArrayList;
 import java.lang.Math;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 
 public class Board 
@@ -20,10 +17,11 @@ public class Board
     public static final int COLS = 9;
     public static final int SIZE = ROWS * COLS;
     // The difference between the edges of the image and the begining of the board.
-    public static final int DIF=15;
+    public static final int DIF = 15;
     // The difference between each cell
     public static final int SPACE = 30;
-    public static int cellSize = 36;
+    // The size of a cell.
+    public static final int cellSize = 36;
     public String turn;
     private Player black,white;
     Image imageBlack = Toolkit.getDefaultToolkit().getImage("images/Black.png");
@@ -34,17 +32,17 @@ public class Board
     // Selected - the selected piece,prev - the previous spots the piece moved 
     // over in the last move(used only in moves with more than one capturing).
     // Possible - the possible moves a player has after an capturing move.
-    long selected = 0,prev = 0,possible = 0;
+    private long selected = 0,prev = 0,possible = 0;
     private boolean anotherMove = false;
     private boolean choose = false;
     // Captureing in my direction, capturing in opposite direction.
     private long capture1,capture2;
     private int selectedRow,selectedCol;
-    private Rules gameRules;
     // The previous direction the player moved to in his multiple capturing move.
     private int prevDirection;
     // A queue containing all the possible moves from the current possition.
     private ArrayList<Move> moves;
+    // The biggest integer value availble by java.
     private int infinity = Integer.MAX_VALUE;
     private Ai ai = new Ai();
     // The depth of search, depth = 5 for the main board.
@@ -58,19 +56,13 @@ public class Board
     private static boolean defensiveMode = false;
     // If there are 15 moves in a row without capturnig, the game ends in a tie.
     public static int tie = 0;
-
-    public boolean isEndGame()
-    {
-        return endGame;
-    }
     
     public Board(GamePanel panel)
     {
-        black = new Player(0x000000000297ffffL);//0x0000000052BFFFFL);//);//1);*/1024);
+        black = new Player(0x000000000297ffffL);//0x0000000052BFFFFL);//);//1)*/1041);
         white = new Player(0x00001ffffd280000L);//0x00001FFFFA940000L);//);//0x8101004L);*/0x12008002000L);
         this.panel = panel;
         turn = "pw";
-        this.gameRules = new Rules();
     }
     
     /**
@@ -82,15 +74,19 @@ public class Board
         this.white = new Player(b.white);
         this.panel = b.panel;
         this.turn = b.turn;
-        this.gameRules = new Rules();
         depth--;
+    }
+    
+    public boolean getEndGame()
+    {
+        return endGame;
     }
     
     /**
      * A constructor used for multiple captures moves the Ai makes.
      * Gets the players state,the turn, the previous direction the player moved 
      * in and the previous locations he visited.
-     */
+     *
     public Board(long white,long black,String turn,int prev,int prevDir)
     {
         this.black = new Player(black);
@@ -98,15 +94,12 @@ public class Board
         this.turn = turn;
         this.prev = prev;
         this.prevDirection = prevDir;
-        this.gameRules = new Rules();
+        this.Rules = new Rules();
         depth--;
-    }
+    }*/
 
     public void paint(Graphics gr) 
     {
-        //System.out.println("started painting");
-        //System.out.println("white: "+this.white.state);
-        //System.out.println("black: "+this.black.state);
         long mask = 1;
         for (int i = 0; i < SIZE; i++, mask<<=1)
         {
@@ -155,7 +148,7 @@ public class Board
             Player curPlayer = turn.equals("pw")? white:black;
             Player opPlayer = turn.equals("pw")? black:white;
             if(!anotherMove)
-            {
+            {// If the move is not a multi capture mive
                 possible = Rules.fullBoard;
                 this.prevDirection = 0;
             }
@@ -174,14 +167,14 @@ public class Board
             }
             else if(selected != 0 && (mask & ~prev) != 0 && (mask & possible) != 0)
             {// If the player has chosen a piece and now wants to move it.
-                if(isEmpty(mask) && gameRules.validMove(selected, mask))
+                if(isEmpty(mask) && Rules.validMove(selected, mask))
                 {
                     long x = selected;
                     x = ~x;
                     curPlayer.state &= x;
                     curPlayer.state |= mask;
-                    capture1 = gameRules.capturingInMyDirection(selected,mask,opPlayer.state);
-                    capture2 = gameRules.capturingInOppositeDirection(selected,mask,opPlayer.state);
+                    capture1 = Rules.capturingInMyDirection(selected,mask,opPlayer.state);
+                    capture2 = Rules.capturingInOppositeDirection(selected,mask,opPlayer.state);
                     prev |= selected;
                     this.prevDirection = (int) (selected>mask? selected/mask:-mask/selected);
                     selected = mask;
@@ -223,6 +216,11 @@ public class Board
         
     }
     
+    /**
+     * Ends a turn by switching the turn.
+     * Checks if the current board is the displayed board, if it is this method 
+     * changes the startAi variable to be true so the Ai will start working.
+     */
     public void endTurn()
     {
         turn = turn.equals("pw")?"pb":"pw";
@@ -230,9 +228,20 @@ public class Board
             startAi = true;
     }
     
+   /**
+    * Makes the Ai perform a move.
+    * Returns a new board after the chosen move.
+    * The method first checks if the endGame has started, if so it decides 
+    * if it should use a defensive strategy.
+    * If the endGame hasn't started yet it checks if the endGame should begin.
+    */	
     public Board startAi()
     {
-        if(endGame = false && ai.countBits(white.state) + ai.countBits(black.state) <= 7)
+        long cur = turn.equals("pw")? white.state:black.state;
+        long op = turn.equals("pb")? white.state:black.state;
+        if(endGame == true)
+            defensiveMode = ai.countBits(cur)-ai.countBits(op)>=0?false:true;
+        if(endGame == false && ai.countBits(white.state) + ai.countBits(black.state) <= 7)
             startEndGame();
         Board newBoard = new Board(this);
         getOrderedMoves();
@@ -248,12 +257,11 @@ public class Board
             {
                 Move m = this.getNextMove();
                 Board b = makeMove(m);
-                int eval = this.ai.alphaBeta(b,4, -infinity, infinity );
+                int eval = this.ai.negaMax(b,4, -infinity, infinity );
                 if(defensiveMode = true)
                 {
-                    long cur = turn.equals("pw")? white.state:black.state;
                     long newCur = turn.equals("pw")? b.getWhiteState():b.getBlackState();
-                    eval -= 10*(ai.checkThreats(b));
+                    eval -= 3*(ai.checkThreats(b));
                 }
                 //System.out.println("finished frist eval");
                 if(eval >= best)
@@ -287,6 +295,12 @@ public class Board
         
     }
     
+    /**
+     * Checks if the player should get another move after performing a capturing 
+     * move.
+     * The method checks if there is another capturing the player can do with 
+     * the current piece.
+     */
     public void getOneMoreMove()
     {
         if(!choose)
@@ -321,29 +335,29 @@ public class Board
     {
         Player opPlayer = turn.equals("pw")? black:white;
         long mask = 0;
-        if(gameRules.validMove(from/*selected*/,from >> 1) && isEmpty(from >> 1))
-            if(gameRules.capturingInMyDirection(from, from >> 1,opPlayer.state) != 0|| gameRules.capturingInOppositeDirection(from, from >> 1,opPlayer.state) != 0)
+        if(Rules.validMove(from/*selected*/,from >> 1) && isEmpty(from >> 1))
+            if(Rules.capturingInMyDirection(from, from >> 1,opPlayer.state) != 0|| Rules.capturingInOppositeDirection(from, from >> 1,opPlayer.state) != 0)
                  mask |= from >> 1;
-        if(gameRules.validMove(from,from << 1) && isEmpty(from << 1))
-            if(gameRules.capturingInMyDirection(from, from << 1,opPlayer.state) != 0|| gameRules.capturingInOppositeDirection(from, from << 1,opPlayer.state) != 0)
+        if(Rules.validMove(from,from << 1) && isEmpty(from << 1))
+            if(Rules.capturingInMyDirection(from, from << 1,opPlayer.state) != 0|| Rules.capturingInOppositeDirection(from, from << 1,opPlayer.state) != 0)
                  mask |= from << 1;
-        if(gameRules.validMove(from,from >> 8) && isEmpty(from >> 8))
-            if(gameRules.capturingInMyDirection(from, from >> 8,opPlayer.state) != 0|| gameRules.capturingInOppositeDirection(from, from >> 8,opPlayer.state) != 0)
+        if(Rules.validMove(from,from >> 8) && isEmpty(from >> 8))
+            if(Rules.capturingInMyDirection(from, from >> 8,opPlayer.state) != 0|| Rules.capturingInOppositeDirection(from, from >> 8,opPlayer.state) != 0)
                  mask |= from >> 8;
-        if(gameRules.validMove(from,from << 8) && isEmpty(from << 8))
-            if(gameRules.capturingInMyDirection(from, from << 8,opPlayer.state) != 0|| gameRules.capturingInOppositeDirection(from, from << 8,opPlayer.state) != 0)
+        if(Rules.validMove(from,from << 8) && isEmpty(from << 8))
+            if(Rules.capturingInMyDirection(from, from << 8,opPlayer.state) != 0|| Rules.capturingInOppositeDirection(from, from << 8,opPlayer.state) != 0)
                  mask |= from << 8;
-        if(gameRules.validMove(from,from >> 9) && isEmpty(from >> 9))
-            if(gameRules.capturingInMyDirection(from, from >> 9,opPlayer.state) != 0|| gameRules.capturingInOppositeDirection(from, from >> 9,opPlayer.state) != 0)
+        if(Rules.validMove(from,from >> 9) && isEmpty(from >> 9))
+            if(Rules.capturingInMyDirection(from, from >> 9,opPlayer.state) != 0|| Rules.capturingInOppositeDirection(from, from >> 9,opPlayer.state) != 0)
                  mask |= from >> 9;
-        if(gameRules.validMove(from,from << 9) && isEmpty(from << 9))
-            if(gameRules.capturingInMyDirection(from, from << 9,opPlayer.state) != 0|| gameRules.capturingInOppositeDirection(from, from << 9,opPlayer.state) != 0)
+        if(Rules.validMove(from,from << 9) && isEmpty(from << 9))
+            if(Rules.capturingInMyDirection(from, from << 9,opPlayer.state) != 0|| Rules.capturingInOppositeDirection(from, from << 9,opPlayer.state) != 0)
                  mask |= from << 9;
-        if(gameRules.validMove(from,from >> 10) && isEmpty(from >> 10))
-            if(gameRules.capturingInMyDirection(from, from >> 10,opPlayer.state) != 0|| gameRules.capturingInOppositeDirection(from, from >> 10,opPlayer.state) != 0)
+        if(Rules.validMove(from,from >> 10) && isEmpty(from >> 10))
+            if(Rules.capturingInMyDirection(from, from >> 10,opPlayer.state) != 0|| Rules.capturingInOppositeDirection(from, from >> 10,opPlayer.state) != 0)
                  mask |= from >> 10;
-        if(gameRules.validMove(from,from << 10) && isEmpty(from << 10))
-            if(gameRules.capturingInMyDirection(from, from << 10,opPlayer.state) != 0|| gameRules.capturingInOppositeDirection(from, from << 10,opPlayer.state) != 0)
+        if(Rules.validMove(from,from << 10) && isEmpty(from << 10))
+            if(Rules.capturingInMyDirection(from, from << 10,opPlayer.state) != 0|| Rules.capturingInOppositeDirection(from, from << 10,opPlayer.state) != 0)
                  mask |= from << 10;
         //So we don't get numbers that are outside of the board.
         mask &= fullBoard;
@@ -486,9 +500,9 @@ public class Board
         // ArryList that contains all the possible multiple eating moves for 
         // every move.
         ArrayList<Move> a = new ArrayList<Move>();
-        if(gameRules.validMove(from,from >> 1) && isEmpty(from >> 1))
+        if(Rules.validMove(from,from >> 1) && isEmpty(from >> 1))
         {
-            capture= gameRules.capturingInMyDirection(from, from >> 1,opPlayer.state);
+            capture= Rules.capturingInMyDirection(from, from >> 1,opPlayer.state);
             if(capture != 0)
             {
                 int dir = (int) (from>from>>1? from/from>>1:-from/from>>1);
@@ -509,7 +523,7 @@ public class Board
             }
             else
                 this.moves.add(new Move(from,from>>1,capture,null));
-            capture= gameRules.capturingInOppositeDirection(from, from >> 1,opPlayer.state);
+            capture= Rules.capturingInOppositeDirection(from, from >> 1,opPlayer.state);
             if(capture != 0)
             {
                 int dir = (int) (from>from>>1? from/from>>1:-from/from>>1);
@@ -529,9 +543,9 @@ public class Board
                     this.moves.add(new Move(from,from>>1,capture,null));
             }
         }
-        if(gameRules.validMove(from,from << 1) && isEmpty(from << 1))
+        if(Rules.validMove(from,from << 1) && isEmpty(from << 1))
         {
-            capture= gameRules.capturingInMyDirection(from, from << 1,opPlayer.state);
+            capture= Rules.capturingInMyDirection(from, from << 1,opPlayer.state);
             if(capture != 0)
             {
                 int dir = (int) (from>from<<1? from/from<<1:-from/from<<1);
@@ -552,7 +566,7 @@ public class Board
             }
             else
                 this.moves.add(new Move(from,from<<1,capture,null));
-            capture= gameRules.capturingInOppositeDirection(from, from << 1,opPlayer.state);
+            capture= Rules.capturingInOppositeDirection(from, from << 1,opPlayer.state);
             if(capture != 0)
             {
                 int dir = (int) (from>from<<1? from/from<<1:-from/from<<1);
@@ -574,9 +588,9 @@ public class Board
         }
         for(int i = 8;i <= 10;i++)
         {
-            if(gameRules.validMove(from,from >> i) && isEmpty(from >> i))
+            if(Rules.validMove(from,from >> i) && isEmpty(from >> i))
             {
-                capture= gameRules.capturingInMyDirection(from, from >> i,opPlayer.state);
+                capture= Rules.capturingInMyDirection(from, from >> i,opPlayer.state);
                 if(capture != 0)
                 {
                     int dir = (int) (from>from>>i? from/from>>i:-from/from>>i);
@@ -597,7 +611,7 @@ public class Board
                 }
                 else
                     this.moves.add(new Move(from,from>>i,capture,null));
-                capture= gameRules.capturingInOppositeDirection(from, from >> i,opPlayer.state);
+                capture= Rules.capturingInOppositeDirection(from, from >> i,opPlayer.state);
                 if(capture != 0)
                 {
                     int dir = (int) (from>from>>i? from/from>>i:-from/from>>i);
@@ -617,9 +631,9 @@ public class Board
                         this.moves.add(new Move(from,from>>i,capture,null));
                 }
             }
-            if(gameRules.validMove(from,from << i) && isEmpty(from << i))
+            if(Rules.validMove(from,from << i) && isEmpty(from << i))
             {
-                capture= gameRules.capturingInMyDirection(from, from << i,opPlayer.state);
+                capture= Rules.capturingInMyDirection(from, from << i,opPlayer.state);
                 if(capture != 0)
                 {
                     int dir = (int) (from>from<<i? from/from<<i:-from/from<<i);
@@ -640,7 +654,7 @@ public class Board
                 }
                 else
                     this.moves.add(new Move(from,from<<i,capture,null));
-                capture= gameRules.capturingInOppositeDirection(from, from << i,opPlayer.state);
+                capture= Rules.capturingInOppositeDirection(from, from << i,opPlayer.state);
                 if(capture != 0)
                 {
                     int dir = (int) (from>from<<i? from/from<<i:-from/from<<i);
@@ -679,6 +693,8 @@ public class Board
         return this.moves.remove(0);
     }
     
+    
+    // delete
     public void printMe(long w,long b)
     {
         String white = Long.toBinaryString(w);
@@ -735,21 +751,21 @@ public class Board
             prevDir = (int)(java.lang.Math.log10(-prevDir)/java.lang.Math.log10(2));
             forbidden = from << prevDir;
         }
-        if(gameRules.validMove(from,from >> 1) && isEmpty(from >> 1,cur|op) 
+        if(Rules.validMove(from,from >> 1) && isEmpty(from >> 1,cur|op) 
                 && (prev & from >> 1) == 0 && (from >> 1) != forbidden)
         {
-            c1 = gameRules.capturingInMyDirection(from, from >> 1,op);
-            c2 = gameRules.capturingInOppositeDirection(from, from >> 1,op);
+            c1 = Rules.capturingInMyDirection(from, from >> 1,op);
+            c2 = Rules.capturingInOppositeDirection(from, from >> 1,op);
             if(c1 != 0)
                 a.add(new Move(from,from>>1,c1,null));
             if(c2 != 0)
                 a.add(new Move(from,from>>1,c2,null));
         }
-        if(gameRules.validMove(from,from << 1) && isEmpty(from << 1,cur|op)
+        if(Rules.validMove(from,from << 1) && isEmpty(from << 1,cur|op)
                 && (prev & from << 1) == 0 && (from << 1) != forbidden)
         {
-            c1 = gameRules.capturingInMyDirection(from, from << 1,op);
-            c2 = gameRules.capturingInOppositeDirection(from, from << 1,op);
+            c1 = Rules.capturingInMyDirection(from, from << 1,op);
+            c2 = Rules.capturingInOppositeDirection(from, from << 1,op);
             if(c1 != 0)
                 a.add(new Move(from,from<<1,c1,null));
             if(c2 != 0)
@@ -757,21 +773,21 @@ public class Board
         }
         for(int i = 8;i <= 10;i++)
         {
-            if(gameRules.validMove(from,from >> i) && isEmpty(from >> i,cur|op)
+            if(Rules.validMove(from,from >> i) && isEmpty(from >> i,cur|op)
                     && (prev & from >> i) == 0 && (from >> i) != forbidden)
             {
-                c1 = gameRules.capturingInMyDirection(from, from >> i,op);
-                c2 = gameRules.capturingInOppositeDirection(from, from >> i,op);
+                c1 = Rules.capturingInMyDirection(from, from >> i,op);
+                c2 = Rules.capturingInOppositeDirection(from, from >> i,op);
                 if(c1 != 0)
                     a.add(new Move(from,from>>i,c1,null));
                 if(c2 != 0)
                     a.add(new Move(from,from>>i,c2,null));
             } 
-            if(gameRules.validMove(from,from << i) && isEmpty(from << i,cur|op)
+            if(Rules.validMove(from,from << i) && isEmpty(from << i,cur|op)
                     && (prev & from << i) == 0 && (from << i) != forbidden)
             {
-                c1 = gameRules.capturingInMyDirection(from, from << i,op);
-                c2 = gameRules.capturingInOppositeDirection(from, from << i,op);
+                c1 = Rules.capturingInMyDirection(from, from << i,op);
+                c2 = Rules.capturingInOppositeDirection(from, from << i,op);
                 if(c1 != 0)
                     a.add(new Move(from,from<<i,c1,null));
                 if(c2 != 0)
@@ -804,6 +820,11 @@ public class Board
         return a;
     }
     
+    /**
+     * A method that makes the Ai enter the endGame state.
+     * Checks if the Ai is losing at the current moment and if it is losing it 
+     * enters in to a defensive mode.
+     */
     public void startEndGame()
     {
         endGame = true;

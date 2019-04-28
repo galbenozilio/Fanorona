@@ -31,29 +31,14 @@ public class Move
         return from;
     }
 
-    public void setFrom(long from)
-    {
-        this.from = from;
-    }
-
     public long getTo()
     {
         return to;
     }
 
-    public void setTo(long to)
-    {
-        this.to = to;
-    }
-
     public long getCapture()
     {
         return capture;
-    }
-
-    public void setCapture(long capture)
-    {
-        this.capture = capture;
     }
 
     public Move getExtraCapture()
