@@ -239,8 +239,8 @@ public class Board
     {
         long cur = turn.equals("pw")? white.state:black.state;
         long op = turn.equals("pb")? white.state:black.state;
-        if(endGame == true)
-            defensiveMode = ai.countBits(cur)-ai.countBits(op)>=0?false:true;
+        //if(endGame == true)
+          //  defensiveMode = ai.countBits(cur)-ai.countBits(op)>=0?false:true;
         if(endGame == false && ai.countBits(white.state) + ai.countBits(black.state) <= 7)
             startEndGame();
         Board newBoard = new Board(this);
