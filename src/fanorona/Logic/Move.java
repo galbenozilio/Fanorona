@@ -50,6 +50,5 @@ public class Move
     {
         this.extraCapture = new Move(extraCapture);
     }
-    
-    
+      
 }

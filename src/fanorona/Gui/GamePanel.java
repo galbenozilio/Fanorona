@@ -12,6 +12,8 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Toolkit;
 import static fanorona.Logic.Board.cellSize;
+import fanorona.Logic.Move;
+import fanorona.Logic.Player;
 import java.lang.reflect.InvocationTargetException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -102,8 +104,57 @@ public class GamePanel extends javax.swing.JPanel {
                     {
                         Logger.getLogger(GamePanel.class.getName()).log(Level.SEVERE, null, ex);
                     }
-                    board = board.startAi();
+                    // Delete
+                    System.out.println("");
+                    System.out.println("");
+                    System.out.println("The move I did: ");
+                    Move m = board.startAi();
+                    System.out.println("from: " + m.getFrom());
+                    System.out.println("to: " + m.getTo());
+                    System.out.println("capture: "+ m.getCapture());
+                    long from, to;
+                    Player cur, op;
+                    from = m.getFrom();
+                    to = m.getTo();
+                    cur = board.turn.equals("pw") ? board.getWhite():board.getBlack();
+                    op = board.turn.equals("pw") ? board.getBlack():board.getWhite();
+                    long x = from;
+                    x = ~x;
+                    cur.state &= x;
+                    cur.state |= to;
+                    op.state ^= m.getCapture();
                     repaint();
+                    while (m.getExtraCapture() != null)
+                    {
+                        try
+                        {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException ex)
+                        {
+                            Logger.getLogger(GamePanel.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                        //board.selected = m.getTo();
+                        m = m.getExtraCapture();
+                        x = m.getFrom();
+                        x = ~x;
+                        cur.state &= x;
+                        cur.state |= m.getTo();
+                        op.state ^= m.getCapture();
+                        repaint();
+                        System.out.println("");
+                        System.out.println("from: "+ m.getFrom());
+                        System.out.println("to: " + m.getTo());
+                        System.out.println("capture: "+ m.getCapture());
+                        //selected = 0;
+                        //panel.repaint();
+                    }
+                    if(m.getCapture() == 0)
+                        board.tie++;
+                    else
+                        board.tie = 0;
+                    board.depth = 5;
+                    board.turn = board.turn.equals("pw") ? "pb" : "pw";
+                    board.startAi = false;
                 }
             }.start(); 
         }

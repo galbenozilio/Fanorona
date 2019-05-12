@@ -12,6 +12,14 @@ public class Rules
     public static final long fullBoard = 0x00001FFFFFFFFFFFL;
     // The previous direction the player moved to in his multiple capturing move.
     //private int prevDirection = 0;
+    // A mask of every piece on the board that can't move left(left edge)
+    public static final long left = 0x1008040201L;
+    // A mask of every piece on the board that can't move right(right edge).
+    public static final long right = 0x8100804020100L;
+    // A mask of every piece on the board that can't move up(upeer edge).
+    public static final long up = 0x1FFL;
+    // A mask of every piece on the board that can't move down(lower edge).
+    public static final long down = 0x1FF000000000L;
     
     /**
      * Checks if the piece can move to the location the user wanted.
@@ -24,7 +32,7 @@ public class Rules
         public static boolean validMove(long from,long to)
     {
         // A mask of every bit on the board that can move in a diagonal.
-        long diagonal = 0x0000055555555555L;
+        long diagonal = 0x155555555555L;
         long possible = 0;//0x000000180c060300L;
         // A mask of every piece on the board that can't move left(edges)
         // and can't move to the right in diagonal.
@@ -131,33 +139,4 @@ public class Rules
         return mask;
     }
     
-    /**
-     * Checks if the selected piece can do an capturing move.
-     * This method is used after one or more captures, because a player gets an 
-     * extra move after a capturing move only if he has another capturing 
-     * move he can make using the same piece.
-     *
-    public static long checkPossibilities(long selected)
-    {
-        long mask = 0;
-        if(validMove(selected,selected >> 1))
-            mask |= selected >> 1;
-        if(validMove(selected,selected << 1))
-            mask |= selected << 1;
-        if(validMove(selected,selected >> 8))
-            mask |= selected >> 8;
-        if(validMove(selected,selected << 8))
-            mask |= selected << 8;
-        if(validMove(selected,selected >> 9))
-            mask |= selected >> 9;
-        if(validMove(selected,selected << 9))
-            mask |= selected << 9;
-        if(validMove(selected,selected >> 10))
-            mask |= selected >> 10;
-        if(validMove(selected,selected << 10))
-            mask |= selected << 10;
-        mask &= fullBoard;
-        return mask;
-    }
-   */
 }
