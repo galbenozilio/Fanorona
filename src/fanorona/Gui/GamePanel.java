@@ -105,13 +105,7 @@ public class GamePanel extends javax.swing.JPanel {
                         Logger.getLogger(GamePanel.class.getName()).log(Level.SEVERE, null, ex);
                     }
                     // Delete
-                    System.out.println("");
-                    System.out.println("");
-                    System.out.println("The move I did: ");
                     Move m = board.startAi();
-                    System.out.println("from: " + m.getFrom());
-                    System.out.println("to: " + m.getTo());
-                    System.out.println("capture: "+ m.getCapture());
                     long from, to;
                     Player cur, op;
                     from = m.getFrom();
@@ -141,7 +135,7 @@ public class GamePanel extends javax.swing.JPanel {
                         cur.state |= m.getTo();
                         op.state ^= m.getCapture();
                         repaint();
-                        System.out.println("");
+                        System.out.println("extra: ");
                         System.out.println("from: "+ m.getFrom());
                         System.out.println("to: " + m.getTo());
                         System.out.println("capture: "+ m.getCapture());

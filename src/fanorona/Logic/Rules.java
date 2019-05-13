@@ -20,6 +20,8 @@ public class Rules
     public static final long up = 0x1FFL;
     // A mask of every piece on the board that can't move down(lower edge).
     public static final long down = 0x1FF000000000L;
+    // A mask of every bit on the board that can move in a diagonal.
+    public static final long diagonal = 0x155555555555L;
     
     /**
      * Checks if the piece can move to the location the user wanted.
@@ -31,8 +33,6 @@ public class Rules
      */
         public static boolean validMove(long from,long to)
     {
-        // A mask of every bit on the board that can move in a diagonal.
-        long diagonal = 0x155555555555L;
         long possible = 0;//0x000000180c060300L;
         // A mask of every piece on the board that can't move left(edges)
         // and can't move to the right in diagonal.

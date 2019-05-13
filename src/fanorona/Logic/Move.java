@@ -50,5 +50,21 @@ public class Move
     {
         this.extraCapture = new Move(extraCapture);
     }
-      
+
+    public void setFrom(long from)
+    {
+        this.from = from;
+    }
+
+    public void setTo(long to)
+    {
+        this.to = to;
+    }
+   
+    public boolean compare(Move m)
+    {
+        if((this.from == m.to && this.to == m.from))
+            return true;
+        return false;
+    }
 }

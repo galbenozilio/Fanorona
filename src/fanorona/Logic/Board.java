@@ -55,11 +55,15 @@ public class Board
     public static boolean defensiveMode = false;
     // If there are 15 moves in a row without capturnig, the game ends in a tie.
     public int tie = 0;
+    //The last move the AI did.
+    public Move lastMove;
+    // The number of times the AI repeated the same move.
+    public int repeat = 0;
 
     public Board(GamePanel panel)
     {
-        black = new Player(/*0x2000L);/*);0x1001005L);*/0x000000000297ffffL);
-        white = new Player(/*0x2001E3L);/*0x4008000020L);*/0x00001ffffd280000L);
+        black = new Player(/*0x100000008088L);/*);0x1001005L);*/0x000000000297ffffL);
+        white = new Player(/*0x2000440000L);/*0x4008000020L);*/0x00001ffffd280000L);
         this.panel = panel;
         turn = "pw";
     }
@@ -276,6 +280,8 @@ public class Board
         getOrderedMoves();
         int best = -infinity;
         Move bestMove = null;
+        if(lastMove == null)
+            lastMove = new Move(0, 0, 0, null);
         if (moves.size() != 0)
         {
             int size = this.moves.size();
@@ -290,9 +296,11 @@ public class Board
                 if(b.checkWin().equals("n"))
                 {
                     int eval = -this.ai.negaMax(b, 4, -infinity, infinity);
-                    System.out.println("from: "+m.getFrom());
-                    System.out.println("to: "+m.getTo());
-                    System.out.println("capture: "+m.getCapture() );
+                    if(m.compare(lastMove) == true && m.getCapture() == 0 && repeat >= 1)
+                        eval -= 1;
+                    //System.out.println("from: "+m.getFrom());
+                    //System.out.println("to: "+m.getTo());
+                    //System.out.println("capture: "+m.getCapture() );
                     //if(tie >=20)
                       //  eval += m.getCapture() != 0 ? 5 : 0;
                     /*if (defensiveMode == true)
@@ -300,7 +308,7 @@ public class Board
                         long newCur = turn.equals("pw") ? b.getWhiteState() : b.getBlackState();
                         eval -= (ai.checkThreats(b));
                     }*/
-                    System.out.println("value: "+eval);
+                    //System.out.println("value: "+eval);
                     if (eval >= best)
                     {
                         best = eval;
@@ -316,6 +324,19 @@ public class Board
             }
             if (endGame == false && bestMove.getCapture() == 0 && ai.countBits(white.state) + ai.countBits(black.state) <= 14)
                 startEndGame();
+            System.out.println("");
+            System.out.println("");
+            System.out.println("The move I did: ");
+            System.out.println("from: " + bestMove.getFrom());
+            System.out.println("to: " + bestMove.getTo());
+            System.out.println("capture: "+ bestMove.getCapture());
+            System.out.println("value: "+best);
+             if(bestMove.compare(lastMove) == true && bestMove.getCapture() == 0)
+                 repeat++;
+             else
+                 repeat = 0;
+            lastMove.setFrom(bestMove.getFrom());
+            lastMove.setTo(bestMove.getTo());
             /*if (bestMove.getCapture() == 0)
                 tie++;
             else
@@ -732,7 +753,7 @@ public class Board
      * op - opponent player's state.
      */
     public ArrayList<Move> getExtraCaptures(long from, long prev, int prevDir, long cur, long op)
-    {//לבדוק האם עשיתי פה את הבדיקה של חזרה על כיוון
+    {
         ArrayList<Move> a = new ArrayList<Move>();
         // forbidden - the move the player can't make.
         long c1, c2, forbidden;
@@ -743,7 +764,7 @@ public class Board
         } else
         {// Shift left
             //prevDir = (int) (java.lang.Math.log10(-prevDir) / java.lang.Math.log10(2));
-            forbidden = from << prevDir;
+            forbidden = from << -prevDir;
         }
         if (Rules.validMove(from, from >> 1) && isEmpty(from >> 1, cur | op)
                 && (prev & from >> 1) == 0 && (from >> 1) != forbidden)
@@ -799,8 +820,8 @@ public class Board
             }
             else
             {
-                dir = (int)(-m.getTo() / m.getFrom());
-                dir = (int)(java.lang.Math.log10(-dir)/java.lang.Math.log10(2));
+                dir = (int)(m.getTo() / m.getFrom());
+                dir = -(int)(java.lang.Math.log10(dir)/java.lang.Math.log10(2));
             }
             //int dir = (int) (m.getFrom() > m.getTo() ? m.getFrom() / m.getTo() : -m.getTo() / m.getFrom());
             long x = m.getFrom();
