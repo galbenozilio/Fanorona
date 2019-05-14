@@ -62,6 +62,7 @@ public class Board
 
     public Board(GamePanel panel)
     {
+        // Delete extra settings
         black = new Player(/*0x100000008088L);/*);0x1001005L);*/0x000000000297ffffL);
         white = new Player(/*0x2000440000L);/*0x4008000020L);*/0x00001ffffd280000L);
         this.panel = panel;

@@ -93,7 +93,7 @@ public class Ai
                     eval = board.turn.equals("pw") ? eval - checkThreats(board):eval;
                 else
                     eval = board.turn.equals("pb") ? eval - checkThreats(board):eval;
-                //eval = eval + countEnemyDeadEnds(board) - countMyDeadEnds(board);
+                eval = eval + countEnemyDeadEnds(board) - countMyDeadEnds(board);
                 /*if(board.turn == "pb")
                 {
                     // change it - no need for 5*eval;
